@@ -1,0 +1,29 @@
+export async function apiGet<T>(path: string): Promise<T> {
+  const r = await fetch(path, {
+    method: "GET",
+    headers: { "Content-Type": "application/json" },
+    cache: "no-store",
+    credentials: "include", // ✅ 쿠키 기반 인증 필수
+  });
+
+  if (!r.ok) {
+    const text = await r.text().catch(() => "");
+    throw new Error(`${r.status} ${r.statusText} ${text}`);
+  }
+  return (await r.json()) as T;
+}
+
+export async function apiPost<T>(path: string, body?: unknown): Promise<T> {
+  const r = await fetch(path, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: body ? JSON.stringify(body) : undefined,
+    credentials: "include", // ✅ 쿠키 기반 인증 필수
+  });
+
+  if (!r.ok) {
+    const text = await r.text().catch(() => "");
+    throw new Error(`${r.status} ${r.statusText} ${text}`);
+  }
+  return (await r.json()) as T;
+}
