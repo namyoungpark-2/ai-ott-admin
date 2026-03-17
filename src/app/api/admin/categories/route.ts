@@ -12,7 +12,7 @@ export async function GET() {
   const token = await getToken();
   if (!token) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
 
-  const r = await fetch(`${BASE}/api/admin/contents`, {
+  const r = await fetch(`${BASE}/api/admin/categories`, {
     headers: { Authorization: `Bearer ${token}` },
   });
   const text = await r.text();
@@ -24,7 +24,7 @@ export async function POST(req: Request) {
   if (!token) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
 
   const body = await req.text();
-  const r = await fetch(`${BASE}/api/admin/contents`, {
+  const r = await fetch(`${BASE}/api/admin/categories`, {
     method: "POST",
     headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
     body,

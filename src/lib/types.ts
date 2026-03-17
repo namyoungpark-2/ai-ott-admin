@@ -64,3 +64,61 @@ export interface AdminVideoAssetSummaryDto {
   createdAt: string | null;
   updatedAt: string | null;
 }
+
+export interface AdminCategoryResult {
+  id: string;
+  slug: string;
+  label: string;
+  description: string | null;
+  sortOrder: number;
+  active: boolean;
+}
+
+export interface AdminCreateContentCommand {
+  mode: string;
+  title: string;
+  seriesId?: string;
+  seriesTitle?: string;
+  seasonNumber?: number;
+  episodeNumber?: number;
+}
+
+export interface AdminUpdateMetadataCommand {
+  lang: string;
+  title: string;
+  description?: string;
+  runtimeSeconds?: number;
+  releaseAt?: string;
+  posterUrl?: string;
+  bannerUrl?: string;
+  ageRating?: string;
+  featured?: boolean;
+  status?: string;
+}
+
+export interface AdminUpdateTaxonomyCommand {
+  categorySlugs: string[];
+  tags: string[];
+}
+
+export interface OpsSummary {
+  totalJobs: number;
+  successCount: number;
+  failedCount: number;
+  runningCount: number;
+  avgProcessingSeconds: number | null;
+}
+
+export interface OpsFailureTop {
+  errorMessage: string;
+  count: number;
+}
+
+export interface OpsRecentRow {
+  jobId: string;
+  videoAssetId: string;
+  status: string;
+  errorMessage: string | null;
+  createdAt: string;
+  updatedAt: string;
+}

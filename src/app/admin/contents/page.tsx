@@ -120,9 +120,14 @@ export default function AdminContentsPage() {
           <div className="mt-1 text-sm text-zinc-500">Upload and manage content lifecycle.</div>
         </div>
   
-        <Button tone="primary" className="h-10" onClick={() => (window.location.href = "/admin/upload")}>
-          Upload
-        </Button>
+        <div className="flex gap-2">
+          <Button tone="secondary" className="h-10" onClick={() => (window.location.href = "/admin/contents/new")}>
+            New Content
+          </Button>
+          <Button tone="primary" className="h-10" onClick={() => (window.location.href = "/admin/upload")}>
+            Upload
+          </Button>
+        </div>
       </div>
   
       <DataTable<ContentRow>

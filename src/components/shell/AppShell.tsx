@@ -7,7 +7,10 @@ import { CommandButton } from "@/components/command/CommandButton";
 import { UserMenu } from "@/components/shell/UserMenu";
 
 const NAV = [
+  { href: "/admin", label: "Dashboard", exact: true },
   { href: "/admin/contents", label: "Contents" },
+  { href: "/admin/upload", label: "Upload" },
+  { href: "/admin/categories", label: "Categories" },
   { href: "/admin/failures", label: "Failures" },
   { href: "/admin/ops", label: "Ops" },
 ];
@@ -48,7 +51,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
           <nav className="px-2">
             {NAV.map((it) => {
-              const active = pathname?.startsWith(it.href);
+              const active = it.exact ? pathname === it.href : pathname?.startsWith(it.href);
               return (
                 <a
                   key={it.href}
