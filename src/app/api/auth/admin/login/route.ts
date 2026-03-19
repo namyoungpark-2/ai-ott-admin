@@ -3,8 +3,7 @@ import { NextResponse } from "next/server";
 export async function POST(req: Request) {
   const body = await req.json();
 
-  // const base = process.env.NEXT_PUBLIC_API_BASE_URL!;
-  const base = "http://localhost:8080";
+  const base = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8080";
   const r = await fetch(`${base}/auth/admin/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -22,7 +21,7 @@ export async function POST(req: Request) {
   res.cookies.set("admin_access_token", token, {
     httpOnly: true,
     sameSite: "lax",
-    secure: false, // 로컬은 false, 운영은 https에서 true
+    secure: process.env.NODE_ENV === "production",
     path: "/",
   });
   return res;
