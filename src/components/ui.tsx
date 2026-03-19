@@ -1,10 +1,11 @@
 import * as React from "react";
 
-/** className 합치기 유틸 (clsx 없이 간단 버전) */
+/** className 합치기 유틸 */
 export function cx(...v: Array<string | undefined | false | null>) {
   return v.filter(Boolean).join(" ");
 }
 
+/* ─── Card ───────────────────────────────────────────────────────────── */
 export function Card({
   className,
   ...props
@@ -12,7 +13,7 @@ export function Card({
   return (
     <div
       className={cx(
-        "rounded-2xl border border-zinc-200/70 bg-white shadow-sm",
+        "rounded-2xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] shadow-sm",
         className
       )}
       {...props}
@@ -34,6 +35,7 @@ export function CardContent({
   return <div className={cx("p-6 pt-3", className)} {...props} />;
 }
 
+/* ─── Button ─────────────────────────────────────────────────────────── */
 type ButtonTone = "primary" | "secondary" | "danger";
 
 export function Button({
@@ -42,12 +44,15 @@ export function Button({
   ...props
 }: React.ButtonHTMLAttributes<HTMLButtonElement> & { tone?: ButtonTone }) {
   const base =
-    "inline-flex items-center justify-center rounded-xl px-3 py-2 text-sm font-medium transition disabled:opacity-60 disabled:pointer-events-none";
+    "inline-flex items-center justify-center gap-1.5 rounded-xl px-3 py-2 text-sm font-medium transition disabled:opacity-50 disabled:pointer-events-none";
 
   const styles: Record<ButtonTone, string> = {
-    primary: "bg-zinc-900 text-white hover:bg-zinc-800",
-    secondary: "border border-zinc-200 bg-white hover:bg-zinc-50",
-    danger: "bg-red-600 text-white hover:bg-red-500",
+    primary:
+      "bg-gradient-to-r from-violet-500 to-pink-500 text-white shadow-[0_0_16px_rgba(139,92,246,.35)] hover:opacity-90 hover:shadow-[0_0_24px_rgba(139,92,246,.55)]",
+    secondary:
+      "border border-[rgb(var(--border))] bg-[rgb(var(--muted))] text-[rgb(var(--fg))] hover:border-violet-500/40 hover:bg-[rgb(var(--muted))]/80",
+    danger:
+      "bg-rose-600 text-white hover:bg-rose-500 shadow-[0_0_12px_rgba(244,63,94,.25)]",
   };
 
   return (
@@ -55,25 +60,26 @@ export function Button({
   );
 }
 
+/* ─── Badge ──────────────────────────────────────────────────────────── */
+type BadgeTone = "neutral" | "success" | "warning" | "danger" | "brand";
+
 export function Badge({
   tone = "neutral",
   className,
   ...props
-}: React.HTMLAttributes<HTMLSpanElement> & {
-  tone?: "neutral" | "success" | "warning" | "danger" | "brand";
-}) {
-  const styles: Record<string, string> = {
-    neutral: "border-zinc-200 text-zinc-700 bg-white",
-    success: "border-emerald-200 text-emerald-700 bg-emerald-50",
-    warning: "border-amber-200 text-amber-700 bg-amber-50",
-    danger: "border-red-200 text-red-700 bg-red-50",
-    brand: "border-violet-200 text-violet-700 bg-violet-50",
+}: React.HTMLAttributes<HTMLSpanElement> & { tone?: BadgeTone }) {
+  const styles: Record<BadgeTone, string> = {
+    neutral: "border-[rgb(var(--border))] text-[rgb(var(--fg))]/70 bg-[rgb(var(--muted))]",
+    success: "border-emerald-500/30 text-emerald-400 bg-emerald-500/10",
+    warning: "border-amber-500/30 text-amber-400 bg-amber-500/10",
+    danger:  "border-rose-500/30 text-rose-400 bg-rose-500/10",
+    brand:   "border-violet-500/30 text-violet-400 bg-violet-500/10",
   };
 
   return (
     <span
       className={cx(
-        "inline-flex items-center rounded-lg border px-2 py-1 text-xs",
+        "inline-flex items-center rounded-lg border px-2 py-1 text-xs font-medium",
         styles[tone],
         className
       )}
@@ -82,6 +88,7 @@ export function Badge({
   );
 }
 
+/* ─── Input ──────────────────────────────────────────────────────────── */
 export function Input({
   className,
   ...props
@@ -89,8 +96,9 @@ export function Input({
   return (
     <input
       className={cx(
-        "h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm outline-none",
-        "focus:ring-2 focus:ring-violet-200 focus:border-violet-300",
+        "h-10 w-full rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--muted))]",
+        "px-3 text-sm text-[rgb(var(--fg))] placeholder:text-[rgb(var(--fg))]/30 outline-none",
+        "focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500/50 transition",
         className
       )}
       {...props}
@@ -98,12 +106,12 @@ export function Input({
   );
 }
 
-/** 아주 단순한 skeleton */
+/* ─── Skeleton ───────────────────────────────────────────────────────── */
 export function Skeleton({ className }: { className?: string }) {
   return (
     <div
       className={cx(
-        "animate-pulse rounded-xl bg-zinc-100",
+        "animate-pulse rounded-xl bg-[rgb(var(--muted))]",
         className ?? "h-4 w-full"
       )}
     />

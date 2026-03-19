@@ -113,8 +113,8 @@ export default function AdminUsersPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">사용자 관리</h1>
-          <p className="text-sm text-zinc-500 mt-1">
+          <h1 className="text-2xl font-bold text-grad">사용자 관리</h1>
+          <p className="text-sm text-[rgb(var(--fg))]/40 mt-1">
             총 {rows.length}명의 사용자
           </p>
         </div>
@@ -130,10 +130,10 @@ export default function AdminUsersPage() {
             key={t}
             onClick={() => setTierFilter(t)}
             className={[
-              "px-3 py-1 rounded-full text-sm font-medium transition",
+              "px-3 py-1.5 rounded-full text-xs font-semibold transition border",
               tierFilter === t
-                ? "bg-zinc-900 text-white"
-                : "border border-zinc-200 hover:bg-zinc-50",
+                ? "bg-violet-500/20 text-violet-300 border-violet-500/40"
+                : "border-[rgb(var(--border))] text-[rgb(var(--fg))]/50 hover:border-violet-500/30 hover:text-[rgb(var(--fg))]/80",
             ].join(" ")}
           >
             {t === "ALL" ? "전체" : t}
@@ -143,17 +143,17 @@ export default function AdminUsersPage() {
 
       {/* Error */}
       {err && (
-        <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-red-700 text-sm">
+        <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 p-4 text-rose-400 text-sm">
           {err}
         </div>
       )}
 
       {/* Table */}
       {!loading && !err && (
-        <div className="overflow-x-auto rounded-2xl border border-zinc-200 bg-white shadow-sm">
+        <div className="overflow-x-auto rounded-2xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-zinc-100 text-left text-xs text-zinc-500 uppercase tracking-wide">
+              <tr className="border-b border-[rgb(var(--border))] text-left text-xs text-[rgb(var(--fg))]/35 uppercase tracking-wide">
                 <th className="px-4 py-3">사용자명</th>
                 <th className="px-4 py-3">역할</th>
                 <th className="px-4 py-3">구독 플랜</th>
@@ -170,7 +170,7 @@ export default function AdminUsersPage() {
                 <tr>
                   <td
                     colSpan={9}
-                    className="px-4 py-8 text-center text-zinc-400"
+                    className="px-4 py-12 text-center text-[rgb(var(--fg))]/30 text-sm"
                   >
                     사용자가 없습니다.
                   </td>
@@ -179,13 +179,13 @@ export default function AdminUsersPage() {
                 rows.map((row) => (
                   <tr
                     key={row.id}
-                    className="border-b border-zinc-50 hover:bg-zinc-50 transition"
+                    className="border-b border-[rgb(var(--border))]/60 hover:bg-[rgb(var(--muted))]/60 transition"
                   >
-                    <td className="px-4 py-3 font-medium">{row.username}</td>
+                    <td className="px-4 py-3 font-medium text-[rgb(var(--fg))]/90">
+                      {row.username}
+                    </td>
                     <td className="px-4 py-3">
-                      <Badge
-                        tone={row.role === "ADMIN" ? "warning" : "neutral"}
-                      >
+                      <Badge tone={row.role === "ADMIN" ? "brand" : "neutral"}>
                         {row.role}
                       </Badge>
                     </td>
@@ -196,18 +196,18 @@ export default function AdminUsersPage() {
                     </td>
                     <td className="px-4 py-3">
                       {row.emailVerified ? (
-                        <span className="text-green-600 font-semibold">✓</span>
+                        <span className="text-emerald-400 font-semibold">✓</span>
                       ) : (
-                        <span className="text-zinc-400">—</span>
+                        <span className="text-[rgb(var(--fg))]/25">—</span>
                       )}
                     </td>
-                    <td className="px-4 py-3 text-zinc-500">
+                    <td className="px-4 py-3 text-[rgb(var(--fg))]/45">
                       {formatDate(row.createdAt)}
                     </td>
-                    <td className="px-4 py-3 text-zinc-500">
+                    <td className="px-4 py-3 text-[rgb(var(--fg))]/45">
                       {formatDate(row.subscriptionExpiresAt)}
                     </td>
-                    <td className="px-4 py-3 font-mono text-xs text-zinc-400">
+                    <td className="px-4 py-3 font-mono text-xs text-[rgb(var(--fg))]/30">
                       {row.stripeCustomerId
                         ? row.stripeCustomerId.slice(0, 12) + "…"
                         : "—"}
@@ -215,16 +215,14 @@ export default function AdminUsersPage() {
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
                         <select
-                          value={
-                            pendingTier[row.id] ?? row.subscriptionTier
-                          }
+                          value={pendingTier[row.id] ?? row.subscriptionTier}
                           onChange={(e) =>
                             setPendingTier((prev) => ({
                               ...prev,
                               [row.id]: e.target.value,
                             }))
                           }
-                          className="rounded-lg border border-zinc-200 px-2 py-1 text-xs bg-white"
+                          className="rounded-lg border border-[rgb(var(--border))] bg-[rgb(var(--muted))] text-[rgb(var(--fg))]/80 px-2 py-1 text-xs outline-none focus:border-violet-500/50 transition"
                         >
                           {TIERS.map((t) => (
                             <option key={t} value={t}>
@@ -265,7 +263,7 @@ export default function AdminUsersPage() {
       )}
 
       {loading && (
-        <div className="text-sm text-zinc-400 py-8 text-center">
+        <div className="text-sm text-[rgb(var(--fg))]/30 py-12 text-center">
           로딩 중…
         </div>
       )}
