@@ -51,7 +51,7 @@ export type DataTableProps<T extends object> = {
   initialDensity?: Density;
 };
 
-function useOnClickOutside<T extends HTMLElement>(ref: React.RefObject<T | null>, cb: () => void) {
+function useOnClickOutside(ref: { current: HTMLElement | null }, cb: () => void) {
   React.useEffect(() => {
     function onDown(e: MouseEvent) {
       const el = ref.current;
