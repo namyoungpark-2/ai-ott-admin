@@ -72,13 +72,13 @@ export default function AdminUsersPage() {
     setSaving(userId);
     try {
       await apiPut(`/api/admin/users/${userId}/subscription`, { tier: newTier });
-      toast({ title: "구독 플랜 변경 완료", tone: "success" });
+      toast({ title: "구독 플랜 변경 완료", type: "success" });
       await refresh();
     } catch (e: unknown) {
       toast({
         title: "변경 실패",
         description: e instanceof Error ? e.message : "Unknown error",
-        tone: "danger",
+        type: "error",
       });
     } finally {
       setSaving(null);
@@ -95,13 +95,13 @@ export default function AdminUsersPage() {
     setDeleting(userId);
     try {
       await apiDelete(`/api/admin/users/${userId}`);
-      toast({ title: "계정 삭제 완료", tone: "success" });
+      toast({ title: "계정 삭제 완료", type: "success" });
       setRows((prev) => prev.filter((r) => r.id !== userId));
     } catch (e: unknown) {
       toast({
         title: "삭제 실패",
         description: e instanceof Error ? e.message : "Unknown error",
-        tone: "danger",
+        type: "error",
       });
     } finally {
       setDeleting(null);
