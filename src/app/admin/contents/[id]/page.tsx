@@ -4,30 +4,23 @@ import { ColumnDef } from "@tanstack/react-table";
 import { useParams } from "next/navigation";
 import * as React from "react";
 
+import { DataTable } from "@/components/table/DataTable";
 import { KeyValue } from "@/components/kv/KeyValue";
 import { ExpandableText } from "@/components/table/ExpandableText";
 import { actionsColumn, selectColumn } from "@/components/table/columns";
 import { Tabs } from "@/components/tabs/Tab";
 import { useToast } from "@/components/toast";
-import { Badge, Button, Card, CardContent, CardHeader } from "@/components/ui";
-import { apiGet, apiPost } from "@/lib/http";
+import { Badge, Button, Card, CardContent, CardHeader, Input } from "@/components/ui";
+import { apiGet, apiPost, apiPut, apiPatch } from "@/lib/http";
+import type { AdminCategoryResult, AdminUpdateMetadataCommand, AdminUpdateTaxonomyCommand } from "@/lib/types";
 
-/**
- * ✅ 너희 detail 응답에 맞춰 필요한 필드만 맞추면 됨.
- * "조정 포인트"는 아래 fetchDetail()에 표시.
- */
 type ContentDetail = {
   contentId: string;
   title?: string;
-
   uiStatus?: string;
   contentStatus?: string;
-
-  // asset / hls
   hlsPath?: string;
   thumbnailPath?: string;
-
-  // video assets 상태(있다면)
   videoAssets?: Array<{
     assetId: string;
     status?: string;
@@ -35,29 +28,26 @@ type ContentDetail = {
     updatedAt?: string;
     attemptCount?: number;
   }>;
-
-  // jobs(있으면)
   jobs?: Array<{
     jobId: string;
-    type?: string; // TRANSCODE/RETRY etc
+    type?: string;
     status?: string;
     createdAt?: string;
     updatedAt?: string;
     errorMessage?: string;
   }>;
-
-  // watch events(있으면)
   recentEvents?: Array<{
     id: string;
-    type: string; // PLAY/HEARTBEAT/COMPLETE
+    type: string;
     positionMs?: number;
     createdAt?: string;
     userId?: string;
   }>;
-
   updatedAt?: string;
   createdAt?: string;
 };
+
+const CONTENT_STATUSES = ["DRAFT", "PUBLISHED", "UNLISTED", "ARCHIVED"];
 
 function statusTone(s?: string) {
   const v = (s ?? "").toUpperCase();
@@ -69,31 +59,40 @@ function statusTone(s?: string) {
 
 export default function AdminContentDetailPage() {
   const { toast } = useToast();
-  const params = useParams<{ contentId: string }>();
-  const contentId = params?.contentId;
+  const params = useParams<{ id: string }>();
+  const contentId = params?.id;
 
-  const [tab, setTab] = React.useState<"overview" | "assets" | "jobs" | "events">("overview");
+  const [tab, setTab] = React.useState<"overview" | "assets" | "jobs" | "events" | "edit">("overview");
   const [loading, setLoading] = React.useState(true);
   const [err, setErr] = React.useState<string | null>(null);
   const [detail, setDetail] = React.useState<ContentDetail | null>(null);
-
-  // ✅ 제품급 UX: 폴링 + 토글 + 마지막 업데이트
   const [polling, setPolling] = React.useState(true);
   const [pollMs, setPollMs] = React.useState(4000);
   const [lastUpdatedAt, setLastUpdatedAt] = React.useState<number | null>(null);
 
+  // Edit tab state
+  const [categories, setCategories] = React.useState<AdminCategoryResult[]>([]);
+  const [metaLang, setMetaLang] = React.useState("en");
+  const [metaTitle, setMetaTitle] = React.useState("");
+  const [metaDesc, setMetaDesc] = React.useState("");
+  const [metaRuntime, setMetaRuntime] = React.useState("");
+  const [metaReleaseAt, setMetaReleaseAt] = React.useState("");
+  const [metaPosterUrl, setMetaPosterUrl] = React.useState("");
+  const [metaBannerUrl, setMetaBannerUrl] = React.useState("");
+  const [metaAgeRating, setMetaAgeRating] = React.useState("");
+  const [metaFeatured, setMetaFeatured] = React.useState(false);
+  const [metaStatus, setMetaStatus] = React.useState("DRAFT");
+  const [taxoCategorySlugs, setTaxoCategorySlugs] = React.useState<string[]>([]);
+  const [taxoTags, setTaxoTags] = React.useState("");
+  const [changeStatus, setChangeStatus] = React.useState("DRAFT");
+  const [savingMeta, setSavingMeta] = React.useState(false);
+  const [savingTaxo, setSavingTaxo] = React.useState(false);
+  const [savingStatus, setSavingStatus] = React.useState(false);
+
   async function fetchDetail({ silent = false }: { silent?: boolean } = {}) {
     if (!contentId) return;
-    if (!silent) {
-      setLoading(true);
-      setErr(null);
-    }
+    if (!silent) { setLoading(true); setErr(null); }
     try {
-      /**
-       * ✅ 조정 포인트 1: 상세 API
-       * 너희 기존 상세 API 경로로 변경
-       * 예) /api/admin/contents/{id}
-       */
       const res = await apiGet<ContentDetail>(`/api/admin/contents/${contentId}`);
       setDetail(res);
       setLastUpdatedAt(Date.now());
@@ -105,24 +104,35 @@ export default function AdminContentDetailPage() {
     }
   }
 
-  React.useEffect(() => {
-    fetchDetail();
-  }, [contentId]);
+  React.useEffect(() => { fetchDetail(); }, [contentId]);
 
   React.useEffect(() => {
     if (!polling) return;
-    const id = window.setInterval(() => {
-      fetchDetail({ silent: true });
-    }, pollMs);
+    const id = window.setInterval(() => fetchDetail({ silent: true }), pollMs);
     return () => window.clearInterval(id);
   }, [polling, pollMs, contentId]);
+
+  // Load categories when edit tab is first opened
+  React.useEffect(() => {
+    if (tab === "edit" && categories.length === 0) {
+      apiGet<AdminCategoryResult[]>("/api/admin/categories")
+        .then(setCategories)
+        .catch(() => {});
+    }
+  }, [tab]);
+
+  // Pre-fill edit form when detail loads
+  React.useEffect(() => {
+    if (detail) {
+      setMetaTitle(detail.title ?? "");
+      setChangeStatus((detail.contentStatus ?? "DRAFT").toUpperCase());
+      setMetaStatus((detail.contentStatus ?? "DRAFT").toUpperCase());
+    }
+  }, [detail?.contentId]);
 
   async function onTranscode() {
     if (!contentId) return;
     try {
-      /**
-       * ✅ 조정 포인트 2: transcode endpoint
-       */
       await apiPost(`/api/admin/contents/${contentId}/transcode`, {});
       toast({ type: "success", title: "Transcode started", description: contentId });
       fetchDetail({ silent: true });
@@ -134,15 +144,77 @@ export default function AdminContentDetailPage() {
   async function onRetry() {
     if (!contentId) return;
     try {
-      /**
-       * ✅ 조정 포인트 3: retry endpoint
-       */
       await apiPost(`/api/admin/contents/${contentId}/retry`, {});
       toast({ type: "success", title: "Retry requested", description: contentId });
       fetchDetail({ silent: true });
     } catch (e: any) {
       toast({ type: "error", title: "Retry failed", description: e?.message ?? "Unknown" });
     }
+  }
+
+  async function onSaveMetadata(e: React.FormEvent) {
+    e.preventDefault();
+    if (!contentId) return;
+    setSavingMeta(true);
+    try {
+      const cmd: AdminUpdateMetadataCommand = {
+        lang: metaLang,
+        title: metaTitle,
+        description: metaDesc || undefined,
+        runtimeSeconds: metaRuntime ? Number(metaRuntime) : undefined,
+        releaseAt: metaReleaseAt || undefined,
+        posterUrl: metaPosterUrl || undefined,
+        bannerUrl: metaBannerUrl || undefined,
+        ageRating: metaAgeRating || undefined,
+        featured: metaFeatured,
+        status: metaStatus || undefined,
+      };
+      await apiPut(`/api/admin/contents/${contentId}/metadata`, cmd);
+      toast({ type: "success", title: "Metadata saved" });
+      fetchDetail({ silent: true });
+    } catch (e: any) {
+      toast({ type: "error", title: "Failed to save metadata", description: e?.message });
+    } finally {
+      setSavingMeta(false);
+    }
+  }
+
+  async function onSaveTaxonomy(e: React.FormEvent) {
+    e.preventDefault();
+    if (!contentId) return;
+    setSavingTaxo(true);
+    try {
+      const cmd: AdminUpdateTaxonomyCommand = {
+        categorySlugs: taxoCategorySlugs,
+        tags: taxoTags.split(",").map((t) => t.trim()).filter(Boolean),
+      };
+      await apiPut(`/api/admin/contents/${contentId}/taxonomy`, cmd);
+      toast({ type: "success", title: "Taxonomy saved" });
+    } catch (e: any) {
+      toast({ type: "error", title: "Failed to save taxonomy", description: e?.message });
+    } finally {
+      setSavingTaxo(false);
+    }
+  }
+
+  async function onChangeStatus() {
+    if (!contentId) return;
+    setSavingStatus(true);
+    try {
+      await apiPatch(`/api/admin/contents/${contentId}/status`, { status: changeStatus });
+      toast({ type: "success", title: `Status changed to ${changeStatus}` });
+      fetchDetail({ silent: true });
+    } catch (e: any) {
+      toast({ type: "error", title: "Failed to change status", description: e?.message });
+    } finally {
+      setSavingStatus(false);
+    }
+  }
+
+  function toggleCategorySlug(slug: string) {
+    setTaxoCategorySlugs((prev) =>
+      prev.includes(slug) ? prev.filter((s) => s !== slug) : [...prev, slug]
+    );
   }
 
   if (loading) return <div className="text-sm text-zinc-500">Loading…</div>;
@@ -153,9 +225,7 @@ export default function AdminContentDetailPage() {
         <div className="font-semibold text-red-900">Failed to load</div>
         <div className="mt-1 text-sm text-red-800">{err}</div>
         <div className="mt-4 flex items-center gap-2">
-          <Button tone="secondary" onClick={() => fetchDetail()}>
-            Retry
-          </Button>
+          <Button tone="secondary" onClick={() => fetchDetail()}>Retry</Button>
           <Button tone="secondary" onClick={() => setPolling((v) => !v)}>
             Polling: {polling ? "ON" : "OFF"}
           </Button>
@@ -179,125 +249,71 @@ export default function AdminContentDetailPage() {
     { key: "assets", label: "Assets", badge: assets.length },
     { key: "jobs", label: "Jobs", badge: jobs.length },
     { key: "events", label: "Events", badge: events.length },
+    { key: "edit", label: "Edit" },
   ] as const;
 
-  // ---------- Tables ----------
   type AssetRow = NonNullable<ContentDetail["videoAssets"]>[number];
-  const assetCols = React.useMemo<ColumnDef<AssetRow>[]>(() => {
-    return [
-      selectColumn<AssetRow>(),
-      { accessorKey: "assetId", header: "Asset ID", cell: ({ getValue }) => <span className="font-mono text-xs">{String(getValue() ?? "")}</span> },
-      {
-        accessorKey: "status",
-        header: "Status",
-        cell: ({ getValue }) => {
-          const s = String(getValue() ?? "-");
-          return <Badge tone={statusTone(s) as any}>{s}</Badge>;
-        },
-      },
-      { accessorKey: "attemptCount", header: "Attempts", cell: ({ getValue }) => <span className="font-mono text-xs">{String(getValue() ?? 0)}</span> },
-      { accessorKey: "errorMessage", header: "Error", cell: ({ getValue }) => <ExpandableText text={String(getValue() ?? "")} /> },
-      { accessorKey: "updatedAt", header: "Updated", cell: ({ getValue }) => <span className="text-zinc-600">{String(getValue() ?? "-")}</span> },
-      actionsColumn<AssetRow>(),
-    ];
-  }, []);
+  const assetCols = React.useMemo<ColumnDef<AssetRow>[]>(() => [
+    selectColumn<AssetRow>(),
+    { accessorKey: "assetId", header: "Asset ID", cell: ({ getValue }) => <span className="font-mono text-xs">{String(getValue() ?? "")}</span> },
+    { accessorKey: "status", header: "Status", cell: ({ getValue }) => { const s = String(getValue() ?? "-"); return <Badge tone={statusTone(s) as any}>{s}</Badge>; } },
+    { accessorKey: "attemptCount", header: "Attempts", cell: ({ getValue }) => <span className="font-mono text-xs">{String(getValue() ?? 0)}</span> },
+    { accessorKey: "errorMessage", header: "Error", cell: ({ getValue }) => <ExpandableText text={String(getValue() ?? "")} /> },
+    { accessorKey: "updatedAt", header: "Updated", cell: ({ getValue }) => <span className="text-zinc-600">{String(getValue() ?? "-")}</span> },
+    actionsColumn<AssetRow>(),
+  ], []);
 
   type JobRow = NonNullable<ContentDetail["jobs"]>[number];
-  const jobCols = React.useMemo<ColumnDef<JobRow>[]>(() => {
-    return [
-      selectColumn<JobRow>(),
-      { accessorKey: "jobId", header: "Job ID", cell: ({ getValue }) => <span className="font-mono text-xs">{String(getValue() ?? "")}</span> },
-      { accessorKey: "type", header: "Type", cell: ({ getValue }) => <span className="text-zinc-900">{String(getValue() ?? "-")}</span> },
-      {
-        accessorKey: "status",
-        header: "Status",
-        cell: ({ getValue }) => {
-          const s = String(getValue() ?? "-");
-          return <Badge tone={statusTone(s) as any}>{s}</Badge>;
-        },
-      },
-      { accessorKey: "createdAt", header: "Created", cell: ({ getValue }) => <span className="text-zinc-600">{String(getValue() ?? "-")}</span> },
-      { accessorKey: "updatedAt", header: "Updated", cell: ({ getValue }) => <span className="text-zinc-600">{String(getValue() ?? "-")}</span> },
-      { accessorKey: "errorMessage", header: "Error", cell: ({ getValue }) => <ExpandableText text={String(getValue() ?? "")} /> },
-      actionsColumn<JobRow>(),
-    ];
-  }, []);
+  const jobCols = React.useMemo<ColumnDef<JobRow>[]>(() => [
+    selectColumn<JobRow>(),
+    { accessorKey: "jobId", header: "Job ID", cell: ({ getValue }) => <span className="font-mono text-xs">{String(getValue() ?? "")}</span> },
+    { accessorKey: "type", header: "Type", cell: ({ getValue }) => <span className="text-zinc-900">{String(getValue() ?? "-")}</span> },
+    { accessorKey: "status", header: "Status", cell: ({ getValue }) => { const s = String(getValue() ?? "-"); return <Badge tone={statusTone(s) as any}>{s}</Badge>; } },
+    { accessorKey: "createdAt", header: "Created", cell: ({ getValue }) => <span className="text-zinc-600">{String(getValue() ?? "-")}</span> },
+    { accessorKey: "updatedAt", header: "Updated", cell: ({ getValue }) => <span className="text-zinc-600">{String(getValue() ?? "-")}</span> },
+    { accessorKey: "errorMessage", header: "Error", cell: ({ getValue }) => <ExpandableText text={String(getValue() ?? "")} /> },
+    actionsColumn<JobRow>(),
+  ], []);
 
-  type EventRow = NonNullable<ContentDetail["recentEvents"]>[number];
-  const eventCols = React.useMemo<ColumnDef<EventRow>[]>(() => {
-    return [
-      { accessorKey: "type", header: "Type", cell: ({ getValue }) => <Badge tone="brand">{String(getValue() ?? "-")}</Badge> },
-      { accessorKey: "positionMs", header: "Position", cell: ({ getValue }) => <span className="font-mono text-xs">{String(getValue() ?? "-")}</span> },
-      { accessorKey: "userId", header: "User", cell: ({ getValue }) => <span className="font-mono text-xs">{String(getValue() ?? "-")}</span> },
-      { accessorKey: "createdAt", header: "Created", cell: ({ getValue }) => <span className="text-zinc-600">{String(getValue() ?? "-")}</span> },
-    ];
-  }, []);
-
-  // ---------- Header / Action Bar ----------
   return (
     <div className="space-y-4">
-      {/* Top summary */}
       <Card>
         <CardHeader className="flex flex-col gap-3">
           <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4">
             <div className="min-w-0">
               <div className="flex items-center gap-3">
-                <div className="text-xl font-extrabold tracking-tight">
-                  {detail.title ?? "Untitled"}
-                </div>
+                <div className="text-xl font-extrabold tracking-tight">{detail.title ?? "Untitled"}</div>
                 <Badge tone={statusTone(statusA) as any}>{statusA}</Badge>
               </div>
-
               <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-zinc-600">
                 <span className="font-mono text-xs">{detail.contentId}</span>
                 {detail.updatedAt ? <span>• updated: {detail.updatedAt}</span> : null}
                 {lastUpdatedAt ? (
-                  <span className="text-xs text-zinc-500">
-                    • refreshed: {new Date(lastUpdatedAt).toLocaleTimeString()}
-                  </span>
+                  <span className="text-xs text-zinc-500">• refreshed: {new Date(lastUpdatedAt).toLocaleTimeString()}</span>
                 ) : null}
               </div>
             </div>
 
-            {/* Action bar */}
             <div className="flex flex-wrap items-center gap-2">
-              <Button tone="primary" className="h-10" onClick={onTranscode}>
-                Transcode
-              </Button>
-              <Button tone="danger" className="h-10" onClick={onRetry}>
-                Retry
-              </Button>
-              <Button
-                tone="secondary"
-                className="h-10"
-                onClick={() => window.open(`/watch/${detail.contentId}`, "_blank")}
-              >
-                Open watch
-              </Button>
-
-              <Button tone="secondary" className="h-10" onClick={() => fetchDetail()}>
-                Refresh
-              </Button>
-
+              <Button tone="primary" className="h-10" onClick={onTranscode}>Transcode</Button>
+              <Button tone="danger" className="h-10" onClick={onRetry}>Retry</Button>
+              <Button tone="secondary" className="h-10" onClick={() => window.open(`/watch/${detail.contentId}`, "_blank")}>Open watch</Button>
+              <Button tone="secondary" className="h-10" onClick={() => fetchDetail()}>Refresh</Button>
               <Button tone="secondary" className="h-10" onClick={() => setPolling((v) => !v)}>
                 Polling: {polling ? "ON" : "OFF"}
               </Button>
-
               <select
                 className="h-10 rounded-xl border border-zinc-200 bg-white px-2 text-sm"
                 value={pollMs}
                 onChange={(e) => setPollMs(Number(e.target.value))}
               >
                 {[3000, 4000, 5000, 8000, 12000].map((n) => (
-                  <option key={n} value={n}>
-                    {n / 1000}s
-                  </option>
+                  <option key={n} value={n}>{n / 1000}s</option>
                 ))}
               </select>
             </div>
           </div>
 
-          {/* KPI */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
             <div className="rounded-2xl border border-zinc-200/70 bg-white p-4 shadow-sm">
               <div className="text-xs font-semibold text-zinc-500">Assets</div>
@@ -323,18 +339,10 @@ export default function AdminContentDetailPage() {
         </CardHeader>
 
         <CardContent>
-          {/* Tabs */}
-          <div className="flex flex-col gap-3">
-            <Tabs
-              items={tabs as any}
-              value={tab}
-              onChange={(k) => setTab(k as any)}
-            />
-          </div>
+          <Tabs items={tabs as any} value={tab} onChange={(k) => setTab(k as any)} />
         </CardContent>
       </Card>
 
-      {/* Tab contents */}
       {tab === "overview" ? (
         <div className="space-y-4">
           <KeyValue
@@ -348,32 +356,18 @@ export default function AdminContentDetailPage() {
               { k: "Updated", v: detail.updatedAt ?? "-" },
             ]}
           />
-
           <Card>
             <CardHeader>
               <div className="text-sm font-semibold">Quick links</div>
-              <div className="text-sm text-zinc-500">Open public resources to verify playback.</div>
             </CardHeader>
             <CardContent className="flex flex-wrap items-center gap-2">
               {detail.hlsPath ? (
-                <Button
-                  tone="secondary"
-                  onClick={() => window.open(detail.hlsPath!, "_blank")}
-                >
-                  Open HLS
-                </Button>
+                <Button tone="secondary" onClick={() => window.open(detail.hlsPath!, "_blank")}>Open HLS</Button>
               ) : null}
               {detail.thumbnailPath ? (
-                <Button
-                  tone="secondary"
-                  onClick={() => window.open(detail.thumbnailPath!, "_blank")}
-                >
-                  Open Thumbnail
-                </Button>
+                <Button tone="secondary" onClick={() => window.open(detail.thumbnailPath!, "_blank")}>Open Thumbnail</Button>
               ) : null}
-              <Button tone="secondary" onClick={() => window.open(`/watch/${detail.contentId}`, "_blank")}>
-                Open Watch Page
-              </Button>
+              <Button tone="secondary" onClick={() => window.open(`/watch/${detail.contentId}`, "_blank")}>Open Watch Page</Button>
             </CardContent>
           </Card>
         </div>
@@ -382,7 +376,7 @@ export default function AdminContentDetailPage() {
       {tab === "assets" ? (
         <DataTable<AssetRow>
           title="Video Assets"
-          description="Inspect asset status and errors. Use bulk actions for batch recovery."
+          description="Inspect asset status and errors."
           data={assets}
           columns={assetCols}
           searchPlaceholder="Search assetId/status/error…"
@@ -393,12 +387,11 @@ export default function AdminContentDetailPage() {
               tone: "danger",
               onClick: async (r) => {
                 try {
-                  // ✅ 조정 포인트 4: asset retry endpoint
                   await apiPost(`/api/admin/video-assets/${r.assetId}/retry`, {});
                   toast({ type: "success", title: "Asset retry requested", description: r.assetId });
                   fetchDetail({ silent: true });
                 } catch (e: any) {
-                  toast({ type: "error", title: "Asset retry failed", description: e?.message ?? "Unknown" });
+                  toast({ type: "error", title: "Asset retry failed", description: e?.message });
                 }
               },
             },
@@ -455,9 +448,6 @@ export default function AdminContentDetailPage() {
           <Card>
             <CardHeader>
               <div className="text-sm font-semibold">Recent watch events</div>
-              <div className="text-sm text-zinc-500">
-                This is useful to validate ingest + player behavior.
-              </div>
             </CardHeader>
             <CardContent>
               {events.length ? (
@@ -474,9 +464,7 @@ export default function AdminContentDetailPage() {
                     <tbody>
                       {events.map((e) => (
                         <tr key={e.id} className="border-b border-zinc-200/60 hover:bg-zinc-50/60">
-                          <td className="px-4 py-3">
-                            <Badge tone="brand">{e.type}</Badge>
-                          </td>
+                          <td className="px-4 py-3"><Badge tone="brand">{e.type}</Badge></td>
                           <td className="px-4 py-3 font-mono text-xs">{String(e.positionMs ?? "-")}</td>
                           <td className="px-4 py-3 font-mono text-xs">{String(e.userId ?? "-")}</td>
                           <td className="px-4 py-3 text-zinc-600">{String(e.createdAt ?? "-")}</td>
@@ -490,27 +478,213 @@ export default function AdminContentDetailPage() {
               )}
             </CardContent>
           </Card>
+          <Card>
+            <CardHeader><div className="text-sm font-semibold">Debug helpers</div></CardHeader>
+            <CardContent className="flex flex-wrap items-center gap-2">
+              <Button tone="secondary" onClick={() => window.open(`/api/app/contents/${detail.contentId}`, "_blank")}>Open app content API</Button>
+              <Button tone="secondary" onClick={() => window.open(`/api/app/watch-events?contentId=${detail.contentId}`, "_blank")}>Query watch-events</Button>
+            </CardContent>
+          </Card>
+        </div>
+      ) : null}
 
+      {tab === "edit" ? (
+        <div className="space-y-4">
+          {/* Status change */}
           <Card>
             <CardHeader>
-              <div className="text-sm font-semibold">Debug helpers</div>
-              <div className="text-sm text-zinc-500">
-                Quick actions for investigation.
-              </div>
+              <div className="text-sm font-semibold">Change Status</div>
+              <div className="text-xs text-zinc-500">Current: <Badge tone={statusTone(statusA) as any}>{statusA}</Badge></div>
             </CardHeader>
-            <CardContent className="flex flex-wrap items-center gap-2">
-              <Button
-                tone="secondary"
-                onClick={() => window.open(`/api/app/contents/${detail.contentId}`, "_blank")}
-              >
-                Open app content API
-              </Button>
-              <Button
-                tone="secondary"
-                onClick={() => window.open(`/api/app/watch-events?contentId=${detail.contentId}`, "_blank")}
-              >
-                Query watch-events
-              </Button>
+            <CardContent>
+              <div className="flex items-center gap-3">
+                <select
+                  className="h-10 rounded-xl border border-zinc-200 bg-white px-3 text-sm"
+                  value={changeStatus}
+                  onChange={(e) => setChangeStatus(e.target.value)}
+                >
+                  {CONTENT_STATUSES.map((s) => (
+                    <option key={s} value={s}>{s}</option>
+                  ))}
+                </select>
+                <Button tone="primary" onClick={onChangeStatus} disabled={savingStatus}>
+                  {savingStatus ? "Saving…" : "Apply Status"}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Metadata form */}
+          <Card>
+            <CardHeader>
+              <div className="text-sm font-semibold">Metadata</div>
+              <div className="text-xs text-zinc-500">Update title, description, and other i18n fields.</div>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={onSaveMetadata} className="space-y-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-zinc-600">Language</label>
+                    <select
+                      className="h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm"
+                      value={metaLang}
+                      onChange={(e) => setMetaLang(e.target.value)}
+                    >
+                      <option value="en">English (en)</option>
+                      <option value="ko">Korean (ko)</option>
+                      <option value="ja">Japanese (ja)</option>
+                      <option value="zh">Chinese (zh)</option>
+                    </select>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-zinc-600">Title *</label>
+                    <Input
+                      value={metaTitle}
+                      onChange={(e) => setMetaTitle(e.target.value)}
+                      placeholder="Content title"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-zinc-600">Description</label>
+                  <textarea
+                    className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-violet-200 focus:border-violet-300 min-h-[80px]"
+                    value={metaDesc}
+                    onChange={(e) => setMetaDesc(e.target.value)}
+                    placeholder="Short description"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-zinc-600">Runtime (seconds)</label>
+                    <Input
+                      type="number"
+                      value={metaRuntime}
+                      onChange={(e) => setMetaRuntime(e.target.value)}
+                      placeholder="e.g. 5400"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-zinc-600">Release Date</label>
+                    <Input
+                      type="datetime-local"
+                      value={metaReleaseAt}
+                      onChange={(e) => setMetaReleaseAt(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-zinc-600">Age Rating</label>
+                    <Input
+                      value={metaAgeRating}
+                      onChange={(e) => setMetaAgeRating(e.target.value)}
+                      placeholder="e.g. PG-13"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-zinc-600">Poster URL</label>
+                    <Input
+                      value={metaPosterUrl}
+                      onChange={(e) => setMetaPosterUrl(e.target.value)}
+                      placeholder="https://..."
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-zinc-600">Banner URL</label>
+                    <Input
+                      value={metaBannerUrl}
+                      onChange={(e) => setMetaBannerUrl(e.target.value)}
+                      placeholder="https://..."
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-zinc-600">Content Status</label>
+                    <select
+                      className="h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm"
+                      value={metaStatus}
+                      onChange={(e) => setMetaStatus(e.target.value)}
+                    >
+                      {CONTENT_STATUSES.map((s) => (
+                        <option key={s} value={s}>{s}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="flex items-end pb-1">
+                    <label className="flex items-center gap-2 text-sm cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={metaFeatured}
+                        onChange={(e) => setMetaFeatured(e.target.checked)}
+                        className="h-4 w-4 rounded"
+                      />
+                      Featured
+                    </label>
+                  </div>
+                </div>
+
+                <Button type="submit" tone="primary" disabled={savingMeta || !metaTitle.trim()}>
+                  {savingMeta ? "Saving…" : "Save Metadata"}
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
+
+          {/* Taxonomy form */}
+          <Card>
+            <CardHeader>
+              <div className="text-sm font-semibold">Taxonomy</div>
+              <div className="text-xs text-zinc-500">Assign categories and tags for catalog browsing.</div>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={onSaveTaxonomy} className="space-y-4">
+                <div className="space-y-2">
+                  <label className="text-xs font-semibold text-zinc-600">Categories</label>
+                  {categories.length === 0 ? (
+                    <div className="text-xs text-zinc-400">No categories found. Create some in the Categories page first.</div>
+                  ) : (
+                    <div className="flex flex-wrap gap-2">
+                      {categories.filter((c) => c.active).map((c) => (
+                        <button
+                          key={c.slug}
+                          type="button"
+                          onClick={() => toggleCategorySlug(c.slug)}
+                          className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition ${
+                            taxoCategorySlugs.includes(c.slug)
+                              ? "border-violet-400 bg-violet-100 text-violet-800"
+                              : "border-zinc-200 bg-white text-zinc-600 hover:bg-zinc-50"
+                          }`}
+                        >
+                          {c.label}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  {taxoCategorySlugs.length > 0 && (
+                    <div className="text-xs text-zinc-400">Selected: {taxoCategorySlugs.join(", ")}</div>
+                  )}
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-zinc-600">Tags (comma-separated)</label>
+                  <Input
+                    value={taxoTags}
+                    onChange={(e) => setTaxoTags(e.target.value)}
+                    placeholder="e.g. action, drama, thriller"
+                  />
+                </div>
+
+                <Button type="submit" tone="primary" disabled={savingTaxo}>
+                  {savingTaxo ? "Saving…" : "Save Taxonomy"}
+                </Button>
+              </form>
             </CardContent>
           </Card>
         </div>

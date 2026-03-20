@@ -35,3 +35,40 @@ export async function apiPost<T>(path: string, body?: unknown): Promise<T> {
   handleResponse(r);
   return (await r.json()) as T;
 }
+
+export async function apiPut<T>(path: string, body?: unknown): Promise<T | void> {
+  const r = await fetch(path, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: body ? JSON.stringify(body) : undefined,
+    credentials: "include",
+  });
+
+  handleResponse(r);
+  const text = await r.text();
+  if (!text) return;
+  return JSON.parse(text) as T;
+}
+
+export async function apiDelete(path: string): Promise<void> {
+  const r = await fetch(path, {
+    method: "DELETE",
+    credentials: "include",
+  });
+  handleResponse(r);
+}
+
+export async function apiPatch<T>(path: string, params?: Record<string, string>): Promise<T | void> {
+  const url = params
+    ? `${path}?${new URLSearchParams(params).toString()}`
+    : path;
+  const r = await fetch(url, {
+    method: "PATCH",
+    credentials: "include",
+  });
+
+  handleResponse(r);
+  const text = await r.text();
+  if (!text) return;
+  return JSON.parse(text) as T;
+}
