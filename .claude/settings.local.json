@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find /Users/namyoungpark/ai-ott/ai-ott-admin -type f -name .env* -o -name *.config.js -o -name *.config.ts)",
+      "Bash(npx next:*)",
+      "Read(//Users/namyoungpark/.nvm/versions/node/**)",
+      "Bash(brew list:*)",
+      "Bash(source ~/.nvm/nvm.sh)",
+      "Bash(nvm ls:*)",
+      "Bash(fnm ls:*)",
+      "Bash(volta list:*)",
+      "Bash(curl:*)",
+      "Bash(ps:*)",
+      "Bash(nvm use:*)"
+    ]
+  }
+}

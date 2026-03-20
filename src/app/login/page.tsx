@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { apiPost } from "@/lib/http";
+import { useAuth } from "@/components/auth/AuthProvider";
 
 export default function LoginPage() {
   const [username, setUsername] = useState("admin");
@@ -12,15 +13,22 @@ export default function LoginPage() {
 
   const sp = useSearchParams();
   const router = useRouter();
+  const { me, refresh } = useAuth();
   const next = sp.get("next") || "/admin/contents";
+
+  // 이미 로그인된 상태면 바로 이동
+  if (me) {
+    router.replace(next);
+    return null;
+  }
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
     setError(null);
     try {
-      // 백엔드 임시 로그인 스펙에 맞춰 body 조정
       await apiPost<{ ok: boolean }>("/api/auth/admin/login", { username, password });
+      await refresh(); // 로그인 후 me 상태 갱신
       router.replace(next);
     } catch (err: unknown) {
       setError((err as { message?: string })?.message ?? "login failed");

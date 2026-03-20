@@ -1,25 +1,14 @@
-import { cookies } from "next/headers";
-import { NextResponse } from "next/server";
+import { getTokenOrUnauthorized, backendFetch } from "@/lib/backend";
 
 export async function POST(req: Request) {
-  const cookieStore = await cookies();
-  const token = cookieStore.get("admin_access_token")?.value;
-
-  if (!token) {
-    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-  }
+  const { token, error } = await getTokenOrUnauthorized();
+  if (error) return error;
 
   const form = await req.formData();
 
-  const r = await fetch("http://localhost:8080/api/admin/uploads/uploads", {
+  return backendFetch("/api/admin/uploads/uploads", {
     method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      // multipart는 Content-Type 직접 세팅 ❌
-    },
+    headers: { Authorization: `Bearer ${token}` },
     body: form as any,
   });
-
-  const text = await r.text();
-  return new NextResponse(text, { status: r.status });
 }
