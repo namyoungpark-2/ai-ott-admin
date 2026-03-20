@@ -83,7 +83,8 @@ function Dropdown({
 }) {
   const [open, setOpen] = React.useState(false);
   const ref = React.useRef<HTMLDivElement>(null);
-  useOnClickOutside(ref, () => setOpen(false));
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  useOnClickOutside(ref as any, () => setOpen(false));
 
   return (
     <div className="relative" ref={ref}>
