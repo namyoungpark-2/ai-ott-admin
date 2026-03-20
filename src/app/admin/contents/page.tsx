@@ -59,7 +59,7 @@ export default function AdminContentsPage() {
         header: "Content ID",
         cell: ({ row, getValue }) => (
           <Link
-            className="font-mono text-xs text-zinc-900 hover:underline"
+            className="font-mono text-xs text-[rgb(var(--fg))] hover:underline"
             href={`/admin/contents/${row.original.contentId}`}
           >
             {String(getValue() ?? "")}
@@ -89,7 +89,7 @@ export default function AdminContentsPage() {
       {
         accessorKey: "updatedAt",
         header: "Updated",
-        cell: ({ getValue }) => <span className="text-zinc-600">{String(getValue() ?? "-")}</span>,
+        cell: ({ getValue }) => <span className="text-[rgb(var(--fg-secondary))]">{String(getValue() ?? "-")}</span>,
       },
       actionsColumn<ContentRow>(),
     ];
@@ -97,14 +97,14 @@ export default function AdminContentsPage() {
 
   if (loading) {
     // 제품급: 로딩도 table skeleton으로 만들 수 있지만, 일단 최소로
-    return <div className="text-sm text-zinc-500">Loading…</div>;
+    return <div className="text-sm text-[rgb(var(--fg-secondary))]">Loading…</div>;
   }
 
   if (err) {
     return (
-      <div className="rounded-2xl border border-red-200 bg-red-50 p-6">
-        <div className="font-semibold text-red-900">Failed to load</div>
-        <div className="mt-1 text-sm text-red-800">{err}</div>
+      <div className="rounded-2xl border border-red-500/30 bg-red-500/10 p-6">
+        <div className="font-semibold text-red-400">Failed to load</div>
+        <div className="mt-1 text-sm text-red-400">{err}</div>
         <div className="mt-4">
           <Button tone="secondary" onClick={refresh}>Retry</Button>
         </div>
@@ -117,7 +117,7 @@ export default function AdminContentsPage() {
       <div className="flex items-center justify-between">
         <div>
           <div className="text-lg font-extrabold tracking-tight">Contents</div>
-          <div className="mt-1 text-sm text-zinc-500">Upload and manage content lifecycle.</div>
+          <div className="mt-1 text-sm text-[rgb(var(--fg-secondary))]">Upload and manage content lifecycle.</div>
         </div>
   
         <div className="flex gap-2">

@@ -70,7 +70,7 @@ export default function CategoriesPage() {
     {
       accessorKey: "description",
       header: "Description",
-      cell: ({ getValue }) => <span className="text-zinc-500 text-xs">{String(getValue() ?? "-")}</span>,
+      cell: ({ getValue }) => <span className="text-[rgb(var(--fg-secondary))] text-xs">{String(getValue() ?? "-")}</span>,
     },
     {
       accessorKey: "sortOrder",
@@ -93,7 +93,7 @@ export default function CategoriesPage() {
     <div className="space-y-6">
       <div>
         <div className="text-lg font-extrabold tracking-tight">Categories</div>
-        <div className="mt-1 text-sm text-zinc-500">Manage content categories used for catalog browsing.</div>
+        <div className="mt-1 text-sm text-[rgb(var(--fg-secondary))]">Manage content categories used for catalog browsing.</div>
       </div>
 
       {/* Create form */}
@@ -105,7 +105,7 @@ export default function CategoriesPage() {
           <form onSubmit={onCreate} className="space-y-3">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div className="space-y-1">
-                <label className="text-xs font-semibold text-zinc-600">Slug *</label>
+                <label className="text-xs font-semibold text-[rgb(var(--fg-secondary))]">Slug *</label>
                 <Input
                   placeholder="e.g. action"
                   value={slug}
@@ -114,7 +114,7 @@ export default function CategoriesPage() {
                 />
               </div>
               <div className="space-y-1">
-                <label className="text-xs font-semibold text-zinc-600">Label *</label>
+                <label className="text-xs font-semibold text-[rgb(var(--fg-secondary))]">Label *</label>
                 <Input
                   placeholder="e.g. Action"
                   value={label}
@@ -124,7 +124,7 @@ export default function CategoriesPage() {
               </div>
             </div>
             <div className="space-y-1">
-              <label className="text-xs font-semibold text-zinc-600">Description</label>
+              <label className="text-xs font-semibold text-[rgb(var(--fg-secondary))]">Description</label>
               <Input
                 placeholder="Optional description"
                 value={description}
@@ -133,7 +133,7 @@ export default function CategoriesPage() {
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
-                <label className="text-xs font-semibold text-zinc-600">Sort Order</label>
+                <label className="text-xs font-semibold text-[rgb(var(--fg-secondary))]">Sort Order</label>
                 <Input
                   type="number"
                   value={sortOrder}

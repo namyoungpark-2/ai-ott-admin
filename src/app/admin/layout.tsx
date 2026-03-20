@@ -19,7 +19,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <div className="text-sm text-zinc-500">Loading…</div>
+        <div className="text-sm text-[rgb(var(--fg-secondary))]">Loading…</div>
       </div>
     );
   }

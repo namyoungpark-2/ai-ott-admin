@@ -63,7 +63,7 @@ export default function OpsPage() {
       accessorKey: "count",
       header: "Count",
       cell: ({ getValue }) => (
-        <span className="font-mono text-xs font-bold text-red-700">{String(getValue() ?? 0)}</span>
+        <span className="font-mono text-xs font-bold text-red-400">{String(getValue() ?? 0)}</span>
       ),
     },
   ], []);
@@ -95,12 +95,12 @@ export default function OpsPage() {
     {
       accessorKey: "createdAt",
       header: "Created",
-      cell: ({ getValue }) => <span className="text-zinc-600 text-xs">{String(getValue() ?? "-")}</span>,
+      cell: ({ getValue }) => <span className="text-[rgb(var(--fg-secondary))] text-xs">{String(getValue() ?? "-")}</span>,
     },
     {
       accessorKey: "updatedAt",
       header: "Updated",
-      cell: ({ getValue }) => <span className="text-zinc-600 text-xs">{String(getValue() ?? "-")}</span>,
+      cell: ({ getValue }) => <span className="text-[rgb(var(--fg-secondary))] text-xs">{String(getValue() ?? "-")}</span>,
     },
   ], []);
 
@@ -109,10 +109,10 @@ export default function OpsPage() {
       <div className="flex items-start justify-between">
         <div>
           <div className="text-lg font-extrabold tracking-tight">Ops — Transcoding</div>
-          <div className="mt-1 text-sm text-zinc-500">
+          <div className="mt-1 text-sm text-[rgb(var(--fg-secondary))]">
             Pipeline health and job metrics.
             {lastUpdated && (
-              <span className="ml-2 text-xs text-zinc-400">
+              <span className="ml-2 text-xs text-[rgb(var(--fg-secondary))]">
                 Last updated: {new Date(lastUpdated).toLocaleTimeString()}
               </span>
             )}
@@ -124,7 +124,7 @@ export default function OpsPage() {
             Polling: {polling ? "ON" : "OFF"}
           </Button>
           <select
-            className="h-9 rounded-xl border border-zinc-200 bg-white px-2 text-sm"
+            className="h-9 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] px-2 text-sm"
             value={pollMs}
             onChange={(e) => setPollMs(Number(e.target.value))}
           >
@@ -148,19 +148,19 @@ export default function OpsPage() {
           <StatCard label="Running" value={summary.runningCount} tone="warning" />
           <Card>
             <CardContent className="pt-5">
-              <div className="text-xs font-semibold text-zinc-500">Avg Processing</div>
+              <div className="text-xs font-semibold text-[rgb(var(--fg-secondary))]">Avg Processing</div>
               <div className="mt-1 text-2xl font-extrabold">
                 {summary.avgProcessingSeconds != null
                   ? `${summary.avgProcessingSeconds.toFixed(1)}s`
                   : "-"}
               </div>
-              <div className="mt-1 text-xs text-zinc-400">Per succeeded job</div>
+              <div className="mt-1 text-xs text-[rgb(var(--fg-secondary))]">Per succeeded job</div>
             </CardContent>
           </Card>
         </div>
       ) : (
         <Card>
-          <CardContent className="py-6 text-sm text-zinc-500">No summary data available.</CardContent>
+          <CardContent className="py-6 text-sm text-[rgb(var(--fg-secondary))]">No summary data available.</CardContent>
         </Card>
       )}
 
@@ -168,11 +168,11 @@ export default function OpsPage() {
       <Card>
         <CardHeader>
           <div className="text-sm font-semibold">Top Failure Errors</div>
-          <div className="text-xs text-zinc-500">Most frequent error messages across all jobs.</div>
+          <div className="text-xs text-[rgb(var(--fg-secondary))]">Most frequent error messages across all jobs.</div>
         </CardHeader>
         <CardContent>
           {topFailures.length === 0 ? (
-            <div className="text-sm text-zinc-500">No failure data.</div>
+            <div className="text-sm text-[rgb(var(--fg-secondary))]">No failure data.</div>
           ) : (
             <DataTable<OpsFailureTop>
               data={topFailures}

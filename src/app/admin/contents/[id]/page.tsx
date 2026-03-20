@@ -217,13 +217,13 @@ export default function AdminContentDetailPage() {
     );
   }
 
-  if (loading) return <div className="text-sm text-zinc-500">Loading…</div>;
+  if (loading) return <div className="text-sm text-[rgb(var(--fg-secondary))]">Loading…</div>;
 
   if (err) {
     return (
-      <div className="rounded-2xl border border-red-200 bg-red-50 p-6">
-        <div className="font-semibold text-red-900">Failed to load</div>
-        <div className="mt-1 text-sm text-red-800">{err}</div>
+      <div className="rounded-2xl border border-red-500/30 bg-red-500/10 p-6">
+        <div className="font-semibold text-red-400">Failed to load</div>
+        <div className="mt-1 text-sm text-red-400">{err}</div>
         <div className="mt-4 flex items-center gap-2">
           <Button tone="secondary" onClick={() => fetchDetail()}>Retry</Button>
           <Button tone="secondary" onClick={() => setPolling((v) => !v)}>
@@ -234,7 +234,7 @@ export default function AdminContentDetailPage() {
     );
   }
 
-  if (!detail) return <div className="text-sm text-zinc-500">No data</div>;
+  if (!detail) return <div className="text-sm text-[rgb(var(--fg-secondary))]">No data</div>;
 
   const statusA = detail.uiStatus ?? detail.contentStatus ?? "UNKNOWN";
   const assets = detail.videoAssets ?? [];
@@ -259,7 +259,7 @@ export default function AdminContentDetailPage() {
     { accessorKey: "status", header: "Status", cell: ({ getValue }) => { const s = String(getValue() ?? "-"); return <Badge tone={statusTone(s) as any}>{s}</Badge>; } },
     { accessorKey: "attemptCount", header: "Attempts", cell: ({ getValue }) => <span className="font-mono text-xs">{String(getValue() ?? 0)}</span> },
     { accessorKey: "errorMessage", header: "Error", cell: ({ getValue }) => <ExpandableText text={String(getValue() ?? "")} /> },
-    { accessorKey: "updatedAt", header: "Updated", cell: ({ getValue }) => <span className="text-zinc-600">{String(getValue() ?? "-")}</span> },
+    { accessorKey: "updatedAt", header: "Updated", cell: ({ getValue }) => <span className="text-[rgb(var(--fg-secondary))]">{String(getValue() ?? "-")}</span> },
     actionsColumn<AssetRow>(),
   ], []);
 
@@ -267,10 +267,10 @@ export default function AdminContentDetailPage() {
   const jobCols = React.useMemo<ColumnDef<JobRow>[]>(() => [
     selectColumn<JobRow>(),
     { accessorKey: "jobId", header: "Job ID", cell: ({ getValue }) => <span className="font-mono text-xs">{String(getValue() ?? "")}</span> },
-    { accessorKey: "type", header: "Type", cell: ({ getValue }) => <span className="text-zinc-900">{String(getValue() ?? "-")}</span> },
+    { accessorKey: "type", header: "Type", cell: ({ getValue }) => <span className="text-[rgb(var(--fg))]">{String(getValue() ?? "-")}</span> },
     { accessorKey: "status", header: "Status", cell: ({ getValue }) => { const s = String(getValue() ?? "-"); return <Badge tone={statusTone(s) as any}>{s}</Badge>; } },
-    { accessorKey: "createdAt", header: "Created", cell: ({ getValue }) => <span className="text-zinc-600">{String(getValue() ?? "-")}</span> },
-    { accessorKey: "updatedAt", header: "Updated", cell: ({ getValue }) => <span className="text-zinc-600">{String(getValue() ?? "-")}</span> },
+    { accessorKey: "createdAt", header: "Created", cell: ({ getValue }) => <span className="text-[rgb(var(--fg-secondary))]">{String(getValue() ?? "-")}</span> },
+    { accessorKey: "updatedAt", header: "Updated", cell: ({ getValue }) => <span className="text-[rgb(var(--fg-secondary))]">{String(getValue() ?? "-")}</span> },
     { accessorKey: "errorMessage", header: "Error", cell: ({ getValue }) => <ExpandableText text={String(getValue() ?? "")} /> },
     actionsColumn<JobRow>(),
   ], []);
@@ -285,11 +285,11 @@ export default function AdminContentDetailPage() {
                 <div className="text-xl font-extrabold tracking-tight">{detail.title ?? "Untitled"}</div>
                 <Badge tone={statusTone(statusA) as any}>{statusA}</Badge>
               </div>
-              <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-zinc-600">
+              <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-[rgb(var(--fg-secondary))]">
                 <span className="font-mono text-xs">{detail.contentId}</span>
                 {detail.updatedAt ? <span>• updated: {detail.updatedAt}</span> : null}
                 {lastUpdatedAt ? (
-                  <span className="text-xs text-zinc-500">• refreshed: {new Date(lastUpdatedAt).toLocaleTimeString()}</span>
+                  <span className="text-xs text-[rgb(var(--fg-secondary))]">• refreshed: {new Date(lastUpdatedAt).toLocaleTimeString()}</span>
                 ) : null}
               </div>
             </div>
@@ -303,7 +303,7 @@ export default function AdminContentDetailPage() {
                 Polling: {polling ? "ON" : "OFF"}
               </Button>
               <select
-                className="h-10 rounded-xl border border-zinc-200 bg-white px-2 text-sm"
+                className="h-10 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] px-2 text-sm"
                 value={pollMs}
                 onChange={(e) => setPollMs(Number(e.target.value))}
               >
@@ -315,25 +315,25 @@ export default function AdminContentDetailPage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-            <div className="rounded-2xl border border-zinc-200/70 bg-white p-4 shadow-sm">
-              <div className="text-xs font-semibold text-zinc-500">Assets</div>
+            <div className="rounded-2xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] p-4 shadow-sm">
+              <div className="text-xs font-semibold text-[rgb(var(--fg-secondary))]">Assets</div>
               <div className="mt-1 text-2xl font-extrabold">{assets.length}</div>
-              <div className="mt-1 text-xs text-zinc-500">Total video assets</div>
+              <div className="mt-1 text-xs text-[rgb(var(--fg-secondary))]">Total video assets</div>
             </div>
-            <div className="rounded-2xl border border-red-200 bg-red-50 p-4 shadow-sm">
-              <div className="text-xs font-semibold text-red-700">Failed</div>
-              <div className="mt-1 text-2xl font-extrabold text-red-900">{failedAssets}</div>
-              <div className="mt-1 text-xs text-red-700">Needs retry/transcode</div>
+            <div className="rounded-2xl border border-red-500/30 bg-red-500/10 p-4 shadow-sm">
+              <div className="text-xs font-semibold text-red-400">Failed</div>
+              <div className="mt-1 text-2xl font-extrabold text-red-400">{failedAssets}</div>
+              <div className="mt-1 text-xs text-red-400">Needs retry/transcode</div>
             </div>
-            <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 shadow-sm">
-              <div className="text-xs font-semibold text-amber-700">Processing</div>
-              <div className="mt-1 text-2xl font-extrabold text-amber-900">{processingAssets}</div>
-              <div className="mt-1 text-xs text-amber-700">In progress</div>
+            <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4 shadow-sm">
+              <div className="text-xs font-semibold text-amber-400">Processing</div>
+              <div className="mt-1 text-2xl font-extrabold text-amber-400">{processingAssets}</div>
+              <div className="mt-1 text-xs text-amber-400">In progress</div>
             </div>
-            <div className="rounded-2xl border border-violet-200 bg-violet-50 p-4 shadow-sm">
-              <div className="text-xs font-semibold text-violet-700">Jobs</div>
-              <div className="mt-1 text-2xl font-extrabold text-violet-900">{jobs.length}</div>
-              <div className="mt-1 text-xs text-violet-700">Recent job records</div>
+            <div className="rounded-2xl border border-[rgb(var(--brand))]/40 bg-violet-500/10 p-4 shadow-sm">
+              <div className="text-xs font-semibold text-violet-400">Jobs</div>
+              <div className="mt-1 text-2xl font-extrabold text-violet-400">{jobs.length}</div>
+              <div className="mt-1 text-xs text-violet-400">Recent job records</div>
             </div>
           </div>
         </CardHeader>
@@ -453,8 +453,8 @@ export default function AdminContentDetailPage() {
               {events.length ? (
                 <div className="overflow-auto">
                   <table className="min-w-full text-sm">
-                    <thead className="text-left text-xs font-semibold text-zinc-500">
-                      <tr className="border-b border-zinc-200/70">
+                    <thead className="text-left text-xs font-semibold text-[rgb(var(--fg-secondary))]">
+                      <tr className="border-b border-[rgb(var(--border))]">
                         <th className="px-4 py-3">Type</th>
                         <th className="px-4 py-3">Position</th>
                         <th className="px-4 py-3">User</th>
@@ -463,18 +463,18 @@ export default function AdminContentDetailPage() {
                     </thead>
                     <tbody>
                       {events.map((e) => (
-                        <tr key={e.id} className="border-b border-zinc-200/60 hover:bg-zinc-50/60">
+                        <tr key={e.id} className="border-b border-[rgb(var(--border))] hover:bg-[rgb(var(--muted))]/60">
                           <td className="px-4 py-3"><Badge tone="brand">{e.type}</Badge></td>
                           <td className="px-4 py-3 font-mono text-xs">{String(e.positionMs ?? "-")}</td>
                           <td className="px-4 py-3 font-mono text-xs">{String(e.userId ?? "-")}</td>
-                          <td className="px-4 py-3 text-zinc-600">{String(e.createdAt ?? "-")}</td>
+                          <td className="px-4 py-3 text-[rgb(var(--fg-secondary))]">{String(e.createdAt ?? "-")}</td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
                 </div>
               ) : (
-                <div className="text-sm text-zinc-500">No events yet.</div>
+                <div className="text-sm text-[rgb(var(--fg-secondary))]">No events yet.</div>
               )}
             </CardContent>
           </Card>
@@ -494,12 +494,12 @@ export default function AdminContentDetailPage() {
           <Card>
             <CardHeader>
               <div className="text-sm font-semibold">Change Status</div>
-              <div className="text-xs text-zinc-500">Current: <Badge tone={statusTone(statusA) as any}>{statusA}</Badge></div>
+              <div className="text-xs text-[rgb(var(--fg-secondary))]">Current: <Badge tone={statusTone(statusA) as any}>{statusA}</Badge></div>
             </CardHeader>
             <CardContent>
               <div className="flex items-center gap-3">
                 <select
-                  className="h-10 rounded-xl border border-zinc-200 bg-white px-3 text-sm"
+                  className="h-10 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] px-3 text-sm"
                   value={changeStatus}
                   onChange={(e) => setChangeStatus(e.target.value)}
                 >
@@ -518,15 +518,15 @@ export default function AdminContentDetailPage() {
           <Card>
             <CardHeader>
               <div className="text-sm font-semibold">Metadata</div>
-              <div className="text-xs text-zinc-500">Update title, description, and other i18n fields.</div>
+              <div className="text-xs text-[rgb(var(--fg-secondary))]">Update title, description, and other i18n fields.</div>
             </CardHeader>
             <CardContent>
               <form onSubmit={onSaveMetadata} className="space-y-3">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div className="space-y-1">
-                    <label className="text-xs font-semibold text-zinc-600">Language</label>
+                    <label className="text-xs font-semibold text-[rgb(var(--fg-secondary))]">Language</label>
                     <select
-                      className="h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm"
+                      className="h-10 w-full rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] px-3 text-sm"
                       value={metaLang}
                       onChange={(e) => setMetaLang(e.target.value)}
                     >
@@ -537,7 +537,7 @@ export default function AdminContentDetailPage() {
                     </select>
                   </div>
                   <div className="space-y-1">
-                    <label className="text-xs font-semibold text-zinc-600">Title *</label>
+                    <label className="text-xs font-semibold text-[rgb(var(--fg-secondary))]">Title *</label>
                     <Input
                       value={metaTitle}
                       onChange={(e) => setMetaTitle(e.target.value)}
@@ -548,9 +548,9 @@ export default function AdminContentDetailPage() {
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold text-zinc-600">Description</label>
+                  <label className="text-xs font-semibold text-[rgb(var(--fg-secondary))]">Description</label>
                   <textarea
-                    className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-violet-200 focus:border-violet-300 min-h-[80px]"
+                    className="w-full rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[rgb(var(--brand))] focus:border-[rgb(var(--brand))] min-h-[80px]"
                     value={metaDesc}
                     onChange={(e) => setMetaDesc(e.target.value)}
                     placeholder="Short description"
@@ -559,7 +559,7 @@ export default function AdminContentDetailPage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                   <div className="space-y-1">
-                    <label className="text-xs font-semibold text-zinc-600">Runtime (seconds)</label>
+                    <label className="text-xs font-semibold text-[rgb(var(--fg-secondary))]">Runtime (seconds)</label>
                     <Input
                       type="number"
                       value={metaRuntime}
@@ -568,7 +568,7 @@ export default function AdminContentDetailPage() {
                     />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-xs font-semibold text-zinc-600">Release Date</label>
+                    <label className="text-xs font-semibold text-[rgb(var(--fg-secondary))]">Release Date</label>
                     <Input
                       type="datetime-local"
                       value={metaReleaseAt}
@@ -576,7 +576,7 @@ export default function AdminContentDetailPage() {
                     />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-xs font-semibold text-zinc-600">Age Rating</label>
+                    <label className="text-xs font-semibold text-[rgb(var(--fg-secondary))]">Age Rating</label>
                     <Input
                       value={metaAgeRating}
                       onChange={(e) => setMetaAgeRating(e.target.value)}
@@ -587,7 +587,7 @@ export default function AdminContentDetailPage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div className="space-y-1">
-                    <label className="text-xs font-semibold text-zinc-600">Poster URL</label>
+                    <label className="text-xs font-semibold text-[rgb(var(--fg-secondary))]">Poster URL</label>
                     <Input
                       value={metaPosterUrl}
                       onChange={(e) => setMetaPosterUrl(e.target.value)}
@@ -595,7 +595,7 @@ export default function AdminContentDetailPage() {
                     />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-xs font-semibold text-zinc-600">Banner URL</label>
+                    <label className="text-xs font-semibold text-[rgb(var(--fg-secondary))]">Banner URL</label>
                     <Input
                       value={metaBannerUrl}
                       onChange={(e) => setMetaBannerUrl(e.target.value)}
@@ -606,9 +606,9 @@ export default function AdminContentDetailPage() {
 
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1">
-                    <label className="text-xs font-semibold text-zinc-600">Content Status</label>
+                    <label className="text-xs font-semibold text-[rgb(var(--fg-secondary))]">Content Status</label>
                     <select
-                      className="h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm"
+                      className="h-10 w-full rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] px-3 text-sm"
                       value={metaStatus}
                       onChange={(e) => setMetaStatus(e.target.value)}
                     >
@@ -641,14 +641,14 @@ export default function AdminContentDetailPage() {
           <Card>
             <CardHeader>
               <div className="text-sm font-semibold">Taxonomy</div>
-              <div className="text-xs text-zinc-500">Assign categories and tags for catalog browsing.</div>
+              <div className="text-xs text-[rgb(var(--fg-secondary))]">Assign categories and tags for catalog browsing.</div>
             </CardHeader>
             <CardContent>
               <form onSubmit={onSaveTaxonomy} className="space-y-4">
                 <div className="space-y-2">
-                  <label className="text-xs font-semibold text-zinc-600">Categories</label>
+                  <label className="text-xs font-semibold text-[rgb(var(--fg-secondary))]">Categories</label>
                   {categories.length === 0 ? (
-                    <div className="text-xs text-zinc-400">No categories found. Create some in the Categories page first.</div>
+                    <div className="text-xs text-[rgb(var(--fg-secondary))]">No categories found. Create some in the Categories page first.</div>
                   ) : (
                     <div className="flex flex-wrap gap-2">
                       {categories.filter((c) => c.active).map((c) => (
@@ -658,8 +658,8 @@ export default function AdminContentDetailPage() {
                           onClick={() => toggleCategorySlug(c.slug)}
                           className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition ${
                             taxoCategorySlugs.includes(c.slug)
-                              ? "border-violet-400 bg-violet-100 text-violet-800"
-                              : "border-zinc-200 bg-white text-zinc-600 hover:bg-zinc-50"
+                              ? "border-violet-400 bg-violet-500/20 text-violet-300"
+                              : "border-[rgb(var(--border))] bg-[rgb(var(--card))] text-[rgb(var(--fg-secondary))] hover:bg-[rgb(var(--muted))]"
                           }`}
                         >
                           {c.label}
@@ -668,12 +668,12 @@ export default function AdminContentDetailPage() {
                     </div>
                   )}
                   {taxoCategorySlugs.length > 0 && (
-                    <div className="text-xs text-zinc-400">Selected: {taxoCategorySlugs.join(", ")}</div>
+                    <div className="text-xs text-[rgb(var(--fg-secondary))]">Selected: {taxoCategorySlugs.join(", ")}</div>
                   )}
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold text-zinc-600">Tags (comma-separated)</label>
+                  <label className="text-xs font-semibold text-[rgb(var(--fg-secondary))]">Tags (comma-separated)</label>
                   <Input
                     value={taxoTags}
                     onChange={(e) => setTaxoTags(e.target.value)}

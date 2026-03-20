@@ -55,7 +55,7 @@ export default function AdminDashboardPage() {
     <div className="space-y-6">
       <div>
         <div className="text-2xl font-extrabold tracking-tight">Dashboard</div>
-        <div className="mt-1 text-sm text-zinc-500">AI OTT admin overview.</div>
+        <div className="mt-1 text-sm text-[rgb(var(--fg-secondary))]">AI OTT admin overview.</div>
       </div>
 
       {/* Stats */}
@@ -83,10 +83,10 @@ export default function AdminDashboardPage() {
               <Link
                 key={s.href}
                 href={s.href}
-                className="rounded-xl border border-zinc-200 bg-zinc-50 p-4 hover:bg-zinc-100 transition-colors"
+                className="rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--muted))] p-4 hover:bg-[rgb(var(--muted))] transition-colors"
               >
-                <div className="text-sm font-semibold text-zinc-900">{s.label}</div>
-                <div className="mt-1 text-xs text-zinc-500">{s.desc}</div>
+                <div className="text-sm font-semibold text-[rgb(var(--fg))]">{s.label}</div>
+                <div className="mt-1 text-xs text-[rgb(var(--fg-secondary))]">{s.desc}</div>
               </Link>
             ))}
           </div>

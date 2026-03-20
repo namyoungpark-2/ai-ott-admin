@@ -178,13 +178,13 @@ export default function AdminFailuresPage() {
         cell: ({ row, getValue }) => (
           <div className="flex flex-col">
             <Link
-              className="font-mono text-xs text-zinc-900 hover:underline"
+              className="font-mono text-xs text-[rgb(var(--fg))] hover:underline"
               href={`/admin/contents/${row.original.contentId}`}
             >
               {String(getValue() ?? "")}
             </Link>
             {row.original.assetId ? (
-              <span className="font-mono text-[11px] text-zinc-400">asset: {row.original.assetId}</span>
+              <span className="font-mono text-[11px] text-[rgb(var(--fg-secondary))]">asset: {row.original.assetId}</span>
             ) : null}
           </div>
         ),
@@ -193,7 +193,7 @@ export default function AdminFailuresPage() {
         accessorKey: "title",
         header: "Title",
         cell: ({ getValue }) => (
-          <div className="max-w-[420px] truncate text-zinc-900">{String(getValue() ?? "-")}</div>
+          <div className="max-w-[420px] truncate text-[rgb(var(--fg))]">{String(getValue() ?? "-")}</div>
         ),
       },
       {
@@ -217,19 +217,19 @@ export default function AdminFailuresPage() {
       {
         accessorKey: "updatedAt",
         header: "Updated",
-        cell: ({ getValue }) => <span className="text-zinc-600">{String(getValue() ?? "-")}</span>,
+        cell: ({ getValue }) => <span className="text-[rgb(var(--fg-secondary))]">{String(getValue() ?? "-")}</span>,
       },
       actionsColumn<FailureRow>(),
     ];
   }, []);
 
-  if (loading) return <div className="text-sm text-zinc-500">Loading…</div>;
+  if (loading) return <div className="text-sm text-[rgb(var(--fg-secondary))]">Loading…</div>;
 
   if (err) {
     return (
-      <div className="rounded-2xl border border-red-200 bg-red-50 p-6">
-        <div className="font-semibold text-red-900">Failed to load</div>
-        <div className="mt-1 text-sm text-red-800">{err}</div>
+      <div className="rounded-2xl border border-red-500/30 bg-red-500/10 p-6">
+        <div className="font-semibold text-red-400">Failed to load</div>
+        <div className="mt-1 text-sm text-red-400">{err}</div>
         <div className="mt-4 flex items-center gap-2">
           <Button tone="secondary" onClick={() => refresh()}>
             Retry
@@ -245,14 +245,14 @@ export default function AdminFailuresPage() {
   return (
     <div className="space-y-4">
       {/* ✅ Summary + Controls */}
-      <div className="rounded-2xl border border-zinc-200/70 bg-white p-4 shadow-sm">
+      <div className="rounded-2xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] p-4 shadow-sm">
         <div className="flex flex-col lg:flex-row lg:items-center gap-3">
           <div className="flex-1">
             <div className="text-lg font-bold tracking-tight">Failures</div>
-            <div className="mt-1 text-sm text-zinc-500">
+            <div className="mt-1 text-sm text-[rgb(var(--fg-secondary))]">
               Monitor failed assets, trigger retries, and watch status converge.
             </div>
-            <div className="mt-2 text-xs text-zinc-500">
+            <div className="mt-2 text-xs text-[rgb(var(--fg-secondary))]">
               {lastUpdatedAt
                 ? `Last updated: ${new Date(lastUpdatedAt).toLocaleTimeString()}`
                 : "Last updated: -"}
@@ -275,7 +275,7 @@ export default function AdminFailuresPage() {
             </Button>
 
             <select
-              className="h-10 rounded-xl border border-zinc-200 bg-white px-2 text-sm"
+              className="h-10 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] px-2 text-sm"
               value={pollMs}
               onChange={(e) => setPollMs(Number(e.target.value))}
               title="Polling interval"
@@ -382,8 +382,8 @@ export default function AdminFailuresPage() {
       >
         {selected ? (
           <div className="space-y-3">
-            <div className="rounded-2xl border border-zinc-200/70 bg-white p-4 shadow-sm">
-              <div className="text-xs font-semibold text-zinc-500">Status</div>
+            <div className="rounded-2xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] p-4 shadow-sm">
+              <div className="text-xs font-semibold text-[rgb(var(--fg-secondary))]">Status</div>
               <div className="mt-2 flex flex-wrap items-center gap-2">
                 <Badge tone={statusTone(bestStatus(selected)) as any}>{bestStatus(selected)}</Badge>
                 {selected.latestJobStatus ? (
@@ -392,15 +392,15 @@ export default function AdminFailuresPage() {
               </div>
             </div>
 
-            <div className="rounded-2xl border border-zinc-200/70 bg-white p-4 shadow-sm">
-              <div className="text-xs font-semibold text-zinc-500">Error</div>
+            <div className="rounded-2xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] p-4 shadow-sm">
+              <div className="text-xs font-semibold text-[rgb(var(--fg-secondary))]">Error</div>
               <div className="mt-2">
                 <ExpandableText text={selected.errorMessage ?? ""} clamp={4} />
               </div>
             </div>
 
-            <div className="rounded-2xl border border-zinc-200/70 bg-white p-4 shadow-sm">
-              <div className="text-xs font-semibold text-zinc-500">Ops</div>
+            <div className="rounded-2xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] p-4 shadow-sm">
+              <div className="text-xs font-semibold text-[rgb(var(--fg-secondary))]">Ops</div>
               <div className="mt-2 flex flex-wrap gap-2">
                 <Button tone="secondary" onClick={() => window.open(`/watch/${selected.contentId}`, "_blank")}>
                   Open watch

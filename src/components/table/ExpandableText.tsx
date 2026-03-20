@@ -13,13 +13,13 @@ export function ExpandableText({
   className?: string;
 }) {
   const [open, setOpen] = React.useState(false);
-  if (!text) return <span className="text-zinc-400">-</span>;
+  if (!text) return <span className="text-[rgb(var(--fg-secondary))]">-</span>;
 
   return (
     <div className={cx("max-w-[680px]", className)}>
       <div
         className={cx(
-          "text-zinc-700 whitespace-pre-wrap break-words",
+          "text-[rgb(var(--fg-secondary))] whitespace-pre-wrap break-words",
           !open && `line-clamp-${clamp}`
         )}
       >
@@ -27,7 +27,7 @@ export function ExpandableText({
       </div>
       <div className="mt-1 flex items-center gap-2">
         <button
-          className="text-xs text-zinc-500 hover:text-zinc-900"
+          className="text-xs text-[rgb(var(--fg-secondary))] hover:text-[rgb(var(--fg))]"
           onClick={() => setOpen((v) => !v)}
         >
           {open ? "Collapse" : "Expand"}

@@ -28,12 +28,12 @@ export function useToast() {
 function toneClass(type: ToastType) {
   switch (type) {
     case "success":
-      return "border-emerald-200 bg-emerald-50 text-emerald-900";
+      return "border-emerald-500/30 bg-emerald-500/10 text-emerald-400";
     case "error":
-      return "border-red-200 bg-red-50 text-red-900";
+      return "border-red-500/30 bg-red-500/10 text-red-400";
     case "info":
     default:
-      return "border-zinc-200 bg-white text-zinc-900";
+      return "border-[rgb(var(--border))] bg-[rgb(var(--card))] text-[rgb(var(--fg))]";
   }
 }
 

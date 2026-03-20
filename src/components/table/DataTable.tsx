@@ -66,7 +66,7 @@ function useOnClickOutside(ref: { current: HTMLElement | null }, cb: () => void)
 
 function Kbd({ children }: { children: React.ReactNode }) {
   return (
-    <kbd className="rounded-md border border-zinc-200 bg-white px-1.5 py-0.5 text-[11px] text-zinc-600">
+    <kbd className="rounded-md border border-[rgb(var(--border))] bg-[rgb(var(--card))] px-1.5 py-0.5 text-[11px] text-[rgb(var(--fg-secondary))]">
       {children}
     </kbd>
   );
@@ -94,7 +94,7 @@ function Dropdown({
       {open ? (
         <div
           className={cx(
-            "absolute z-50 mt-2 w-56 rounded-2xl border border-zinc-200 bg-white shadow-sm",
+            "absolute z-50 mt-2 w-56 rounded-2xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] shadow-sm",
             align === "right" ? "right-0" : "left-0"
           )}
         >
@@ -122,8 +122,8 @@ function MenuItem({
       onClick={onClick}
       className={cx(
         "w-full px-3 py-2 text-left text-sm transition",
-        "hover:bg-zinc-50 disabled:opacity-50 disabled:pointer-events-none",
-        danger ? "text-red-600" : "text-zinc-900"
+        "hover:bg-[rgb(var(--muted))] disabled:opacity-50 disabled:pointer-events-none",
+        danger ? "text-red-400" : "text-[rgb(var(--fg))]"
       )}
     >
       {children}
@@ -192,17 +192,17 @@ export function DataTable<T extends object>(props: DataTableProps<T>) {
   const rowPad = density === "compact" ? "py-2" : "py-3";
 
   return (
-    <div className="rounded-2xl border border-zinc-200/70 bg-white shadow-sm">
+    <div className="rounded-2xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] shadow-sm">
       {/* Header */}
       <div className="p-6 pb-3 flex flex-col gap-3">
         <div className="flex items-start justify-between gap-4">
           <div>
             {title ? <div className="text-lg font-bold tracking-tight">{title}</div> : null}
-            {description ? <div className="mt-1 text-sm text-zinc-500">{description}</div> : null}
+            {description ? <div className="mt-1 text-sm text-[rgb(var(--fg-secondary))]">{description}</div> : null}
           </div>
 
           <div className="flex items-center gap-2">
-            <div className="text-xs text-zinc-500 hidden md:flex items-center gap-2">
+            <div className="text-xs text-[rgb(var(--fg-secondary))] hidden md:flex items-center gap-2">
               <span>Tips:</span>
               <Kbd>Shift</Kbd>+Click (sort)
             </div>
@@ -215,7 +215,7 @@ export function DataTable<T extends object>(props: DataTableProps<T>) {
               }
             >
               <div className="p-2">
-                <div className="px-2 py-1 text-xs font-semibold text-zinc-500">Visible columns</div>
+                <div className="px-2 py-1 text-xs font-semibold text-[rgb(var(--fg-secondary))]">Visible columns</div>
                 <div className="mt-1 max-h-72 overflow-auto">
                   {table.getAllLeafColumns().map((col) => {
                     const canHide = col.getCanHide();
@@ -223,7 +223,7 @@ export function DataTable<T extends object>(props: DataTableProps<T>) {
                       <label
                         key={col.id}
                         className={cx(
-                          "flex items-center gap-2 rounded-lg px-2 py-2 text-sm hover:bg-zinc-50",
+                          "flex items-center gap-2 rounded-lg px-2 py-2 text-sm hover:bg-[rgb(var(--muted))]",
                           !canHide && "opacity-60"
                         )}
                       >
@@ -264,7 +264,7 @@ export function DataTable<T extends object>(props: DataTableProps<T>) {
 
           {hasSelection && bulkActions?.length ? (
             <div className="flex items-center gap-2">
-              <div className="text-sm text-zinc-600">
+              <div className="text-sm text-[rgb(var(--fg-secondary))]">
                 Selected <b>{selectedRows.length}</b>
               </div>
               {bulkActions.map((a) => (
@@ -286,12 +286,12 @@ export function DataTable<T extends object>(props: DataTableProps<T>) {
       </div>
 
       {/* Table */}
-      <div className="border-t border-zinc-200/70">
+      <div className="border-t border-[rgb(var(--border))]">
         <div className="overflow-auto">
           <table className="min-w-full text-sm">
-            <thead className="sticky top-0 z-10 bg-white">
+            <thead className="sticky top-0 z-10 bg-[rgb(var(--card))]">
               {table.getHeaderGroups().map((hg) => (
-                <tr key={hg.id} className="border-b border-zinc-200/70">
+                <tr key={hg.id} className="border-b border-[rgb(var(--border))]">
                   {hg.headers.map((header) => {
                     const canSort = header.column.getCanSort();
                     const sortDir = header.column.getIsSorted(); // false | 'asc' | 'desc'
@@ -299,7 +299,7 @@ export function DataTable<T extends object>(props: DataTableProps<T>) {
                       <th
                         key={header.id}
                         className={cx(
-                          "px-4 py-3 text-left text-xs font-semibold tracking-wide text-zinc-500",
+                          "px-4 py-3 text-left text-xs font-semibold tracking-wide text-[rgb(var(--fg-secondary))]",
                           header.column.id === "__select" && "w-10",
                           header.column.id === "__actions" && "w-12"
                         )}
@@ -330,7 +330,7 @@ export function DataTable<T extends object>(props: DataTableProps<T>) {
                 <tr>
                   <td colSpan={table.getAllLeafColumns().length} className="px-6 py-10 text-center">
                     <div className="text-sm font-semibold">No results</div>
-                    <div className="mt-1 text-sm text-zinc-500">
+                    <div className="mt-1 text-sm text-[rgb(var(--fg-secondary))]">
                       Try adjusting filters or search keywords.
                     </div>
                   </td>
@@ -341,8 +341,8 @@ export function DataTable<T extends object>(props: DataTableProps<T>) {
                     <tr
                       key={row.id}
                       className={cx(
-                        "border-b border-zinc-200/60 hover:bg-zinc-50/60 transition",
-                        row.getIsSelected() && "bg-zinc-50"
+                        "border-b border-[rgb(var(--border))] hover:bg-[rgb(var(--muted))]/60 transition",
+                        row.getIsSelected() && "bg-[rgb(var(--muted))]"
                       )}
                     >
                       {row.getVisibleCells().map((cell) => {
@@ -355,7 +355,7 @@ export function DataTable<T extends object>(props: DataTableProps<T>) {
                                 <Dropdown
                                   trigger={
                                     <button
-                                      className="h-8 w-8 rounded-xl border border-zinc-200 bg-white hover:bg-zinc-50"
+                                      className="h-8 w-8 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] hover:bg-[rgb(var(--muted))]"
                                       aria-label="Row actions"
                                     >
                                       ⋯
@@ -399,7 +399,7 @@ export function DataTable<T extends object>(props: DataTableProps<T>) {
 
         {/* Footer */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 p-4">
-          <div className="text-sm text-zinc-600">
+          <div className="text-sm text-[rgb(var(--fg-secondary))]">
             Showing{" "}
             <b>
               {table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1}
@@ -432,7 +432,7 @@ export function DataTable<T extends object>(props: DataTableProps<T>) {
               ‹ Prev
             </Button>
 
-            <div className="text-sm text-zinc-600 px-2">
+            <div className="text-sm text-[rgb(var(--fg-secondary))] px-2">
               Page <b>{table.getState().pagination.pageIndex + 1}</b> /{" "}
               <b>{table.getPageCount()}</b>
             </div>
@@ -455,7 +455,7 @@ export function DataTable<T extends object>(props: DataTableProps<T>) {
             </Button>
 
             <select
-              className="h-9 rounded-xl border border-zinc-200 bg-white px-2 text-sm"
+              className="h-9 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] px-2 text-sm"
               value={table.getState().pagination.pageSize}
               onChange={(e) => table.setPageSize(Number(e.target.value))}
             >

@@ -23,8 +23,8 @@ export function Tabs({
             className={cx(
               "rounded-xl border px-3 py-2 text-sm transition",
               active
-                ? "border-violet-200 bg-violet-50 text-violet-900"
-                : "border-zinc-200 bg-white hover:bg-zinc-50 text-zinc-700"
+                ? "border-[rgb(var(--brand))]/40 bg-violet-500/10 text-violet-300"
+                : "border-[rgb(var(--border))] bg-[rgb(var(--card))] hover:bg-[rgb(var(--muted))] text-[rgb(var(--fg-secondary))]"
             )}
           >
             <span className="font-semibold">{it.label}</span>
@@ -32,7 +32,7 @@ export function Tabs({
               <span
                 className={cx(
                   "ml-2 inline-flex items-center rounded-lg border px-2 py-0.5 text-xs",
-                  active ? "border-violet-200 bg-white" : "border-zinc-200 bg-white"
+                  active ? "border-[rgb(var(--brand))]/40 bg-[rgb(var(--card))]" : "border-[rgb(var(--border))] bg-[rgb(var(--card))]"
                 )}
               >
                 {it.badge}

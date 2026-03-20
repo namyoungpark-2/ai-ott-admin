@@ -19,7 +19,7 @@ export function UserMenu() {
     return () => document.removeEventListener("mousedown", onDown);
   }, []);
 
-  if (loading) return <div className="text-xs text-zinc-500">…</div>;
+  if (loading) return <div className="text-xs text-[rgb(var(--fg-secondary))]">…</div>;
 
   // 로그인 안 된 상태면 Login 버튼
   if (!me) {
@@ -37,22 +37,22 @@ export function UserMenu() {
       </Button>
 
       {open ? (
-        <div className="absolute right-0 mt-2 w-56 rounded-2xl border border-zinc-200 bg-white shadow-sm">
-          <div className="p-3 border-b border-zinc-200/70">
+        <div className="absolute right-0 mt-2 w-56 rounded-2xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] shadow-sm">
+          <div className="p-3 border-b border-[rgb(var(--border))]">
             <div className="text-sm font-semibold truncate">{me.name ?? "Admin"}</div>
-            <div className="text-xs text-zinc-500 truncate">{me.email ?? "-"}</div>
-            {me.role ? <div className="mt-1 text-xs text-zinc-500">Role: {me.role}</div> : null}
+            <div className="text-xs text-[rgb(var(--fg-secondary))] truncate">{me.email ?? "-"}</div>
+            {me.role ? <div className="mt-1 text-xs text-[rgb(var(--fg-secondary))]">Role: {me.role}</div> : null}
           </div>
 
           <button
-            className={cx("w-full px-3 py-2 text-left text-sm hover:bg-zinc-50")}
+            className={cx("w-full px-3 py-2 text-left text-sm hover:bg-[rgb(var(--muted))]")}
             onClick={() => (window.location.href = "/admin/account")}
           >
             Account
           </button>
 
           <button
-            className={cx("w-full px-3 py-2 text-left text-sm text-red-600 hover:bg-zinc-50")}
+            className={cx("w-full px-3 py-2 text-left text-sm text-red-400 hover:bg-[rgb(var(--muted))]")}
             onClick={() => logout()}
           >
             Logout
