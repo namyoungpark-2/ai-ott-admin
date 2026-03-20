@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { apiPost } from "@/lib/http";
 import { useAuth } from "@/components/auth/AuthProvider";
 
-export default function LoginPage() {
+function LoginForm() {
   const [username, setUsername] = useState("admin");
   const [password, setPassword] = useState("admin");
   const [error, setError] = useState<string | null>(null);
@@ -28,7 +28,7 @@ export default function LoginPage() {
     setError(null);
     try {
       await apiPost<{ ok: boolean }>("/api/auth/admin/login", { username, password });
-      await refresh(); // 로그인 후 me 상태 갱신
+      await refresh();
       router.replace(next);
     } catch (err: unknown) {
       setError((err as { message?: string })?.message ?? "login failed");
@@ -41,10 +41,6 @@ export default function LoginPage() {
     <main className="min-h-screen flex items-center justify-center p-6">
       <div className="w-full max-w-md rounded-2xl bg-white shadow p-6">
         <h1 className="text-xl font-semibold">Admin Login</h1>
-        <p className="text-sm text-zinc-500 mt-1">
-          /auth/admin/login → accessToken 쿠키 저장
-        </p>
-
         <form className="mt-6 space-y-3" onSubmit={onSubmit}>
           <div>
             <label className="text-sm text-zinc-600">Username</label>
@@ -82,5 +78,13 @@ export default function LoginPage() {
         </form>
       </div>
     </main>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginForm />
+    </Suspense>
   );
 }
