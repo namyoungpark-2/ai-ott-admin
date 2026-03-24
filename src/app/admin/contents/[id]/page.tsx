@@ -1,4 +1,6 @@
 "use client";
+/* eslint-disable react-compiler/react-compiler */
+"use no memo";
 
 import { ColumnDef } from "@tanstack/react-table";
 import { useParams } from "next/navigation";
