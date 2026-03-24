@@ -124,9 +124,9 @@ export default function AdminContentDetailPage() {
   // Pre-fill edit form when detail loads
   React.useEffect(() => {
     if (detail) {
-      setMetaTitle(detail.title ?? "");
-      setChangeStatus((detail.contentStatus ?? "DRAFT").toUpperCase());
-      setMetaStatus((detail.contentStatus ?? "DRAFT").toUpperCase());
+      setMetaTitle(String(detail.title ?? ""));
+      setChangeStatus(String(detail.contentStatus ?? "DRAFT").toUpperCase());
+      setMetaStatus(String(detail.contentStatus ?? "DRAFT").toUpperCase());
     }
   }, [detail?.contentId]);
 
@@ -236,7 +236,7 @@ export default function AdminContentDetailPage() {
 
   if (!detail) return <div className="text-sm text-[rgb(var(--fg-secondary))]">No data</div>;
 
-  const statusA = detail.uiStatus ?? detail.contentStatus ?? "UNKNOWN";
+  const statusA = String(detail.uiStatus ?? detail.contentStatus ?? "UNKNOWN");
   const assets = detail.videoAssets ?? [];
   const jobs = detail.jobs ?? [];
   const events = detail.recentEvents ?? [];
@@ -282,12 +282,12 @@ export default function AdminContentDetailPage() {
           <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4">
             <div className="min-w-0">
               <div className="flex items-center gap-3">
-                <div className="text-xl font-extrabold tracking-tight">{detail.title ?? "Untitled"}</div>
+                <div className="text-xl font-extrabold tracking-tight">{String(detail.title ?? "Untitled")}</div>
                 <Badge tone={statusTone(statusA) as any}>{statusA}</Badge>
               </div>
               <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-[rgb(var(--fg-secondary))]">
                 <span className="font-mono text-xs">{detail.contentId}</span>
-                {detail.updatedAt ? <span>• updated: {detail.updatedAt}</span> : null}
+                {detail.updatedAt ? <span>• updated: {String(detail.updatedAt)}</span> : null}
                 {lastUpdatedAt ? (
                   <span className="text-xs text-[rgb(var(--fg-secondary))]">• refreshed: {new Date(lastUpdatedAt).toLocaleTimeString()}</span>
                 ) : null}
@@ -349,11 +349,11 @@ export default function AdminContentDetailPage() {
             cols={3}
             items={[
               { k: "Content ID", v: <span className="font-mono text-xs">{detail.contentId}</span> },
-              { k: "Title", v: detail.title },
+              { k: "Title", v: String(detail.title ?? "-") },
               { k: "Status", v: <Badge tone={statusTone(statusA) as any}>{statusA}</Badge> },
-              { k: "HLS", v: detail.hlsPath ? <span className="font-mono text-xs">{detail.hlsPath}</span> : "-" },
-              { k: "Thumbnail", v: detail.thumbnailPath ? <span className="font-mono text-xs">{detail.thumbnailPath}</span> : "-" },
-              { k: "Updated", v: detail.updatedAt ?? "-" },
+              { k: "HLS", v: detail.hlsPath ? <span className="font-mono text-xs">{String(detail.hlsPath)}</span> : "-" },
+              { k: "Thumbnail", v: detail.thumbnailPath ? <span className="font-mono text-xs">{String(detail.thumbnailPath)}</span> : "-" },
+              { k: "Updated", v: String(detail.updatedAt ?? "-") },
             ]}
           />
           <Card>
