@@ -27,6 +27,7 @@ export async function backendFetch(
     r = await fetch(`${API_BASE}${path}`, {
       ...init,
       headers: {
+        "ngrok-skip-browser-warning": "true",
         ...init?.headers,
       },
     });
