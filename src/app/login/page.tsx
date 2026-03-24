@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense, useState, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { apiPost } from "@/lib/http";
 import { useAuth } from "@/components/auth/AuthProvider";
@@ -17,10 +17,11 @@ function LoginForm() {
   const next = sp.get("next") || "/admin/contents";
 
   // 이미 로그인된 상태면 바로 이동
-  if (me) {
-    router.replace(next);
-    return null;
-  }
+  useEffect(() => {
+    if (me) router.replace(next);
+  }, [me, next, router]);
+
+  if (me) return null;
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
