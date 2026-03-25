@@ -1,71 +1,99 @@
 "use client";
 
-import { ColumnDef } from "@tanstack/react-table";
 import { useParams } from "next/navigation";
 import * as React from "react";
+import Hls from "hls.js";
 
-import { DataTable } from "@/components/table/DataTable";
 import { KeyValue } from "@/components/kv/KeyValue";
-import { ExpandableText } from "@/components/table/ExpandableText";
-import { actionsColumn, selectColumn } from "@/components/table/columns";
 import { Tabs } from "@/components/tabs/Tab";
 import { useToast } from "@/components/toast";
 import { Badge, Button, Card, CardContent, CardHeader, Input } from "@/components/ui";
 import { apiGet, apiPost, apiPut, apiPatch } from "@/lib/http";
-import type { AdminCategoryResult, AdminUpdateMetadataCommand, AdminUpdateTaxonomyCommand } from "@/lib/types";
-
-type ContentDetail = {
-  contentId: string;
-  title?: string;
-  uiStatus?: string;
-  contentStatus?: string;
-  hlsPath?: string;
-  thumbnailPath?: string;
-  videoAssets?: Array<{
-    assetId: string;
-    status?: string;
-    errorMessage?: string;
-    updatedAt?: string;
-    attemptCount?: number;
-  }>;
-  jobs?: Array<{
-    jobId: string;
-    type?: string;
-    status?: string;
-    createdAt?: string;
-    updatedAt?: string;
-    errorMessage?: string;
-  }>;
-  recentEvents?: Array<{
-    id: string;
-    type: string;
-    positionMs?: number;
-    createdAt?: string;
-    userId?: string;
-  }>;
-  updatedAt?: string;
-  createdAt?: string;
-};
+import type {
+  AdminContentDetailDto,
+  AdminCategoryResult,
+  AdminUpdateMetadataCommand,
+  AdminUpdateTaxonomyCommand,
+} from "@/lib/types";
 
 const CONTENT_STATUSES = ["DRAFT", "PUBLISHED", "UNLISTED", "ARCHIVED"];
 
 function statusTone(s?: string) {
   const v = (s ?? "").toUpperCase();
   if (v.includes("FAIL")) return "danger";
-  if (v.includes("READY") || v.includes("SUCCESS") || v.includes("DONE")) return "success";
-  if (v.includes("PROCESS") || v.includes("RUN") || v.includes("PEND")) return "warning";
+  if (v.includes("READY") || v.includes("SUCCESS") || v.includes("DONE") || v.includes("PUBLISHED")) return "success";
+  if (v.includes("PROCESS") || v.includes("RUN") || v.includes("PEND") || v.includes("TRANSCOD") || v.includes("UPLOAD")) return "warning";
   return "neutral";
 }
 
+function formatDate(iso?: string | null) {
+  if (!iso) return "-";
+  try {
+    return new Date(iso).toLocaleString("ko-KR", { timeZone: "Asia/Seoul" });
+  } catch {
+    return iso;
+  }
+}
+
+/* ─── HLS Video Player ─── */
+function HlsPlayer({ src }: { src: string }) {
+  const videoRef = React.useRef<HTMLVideoElement>(null);
+  const hlsRef = React.useRef<Hls | null>(null);
+  const [error, setError] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    if (Hls.isSupported()) {
+      const hls = new Hls();
+      hlsRef.current = hls;
+      hls.loadSource(src);
+      hls.attachMedia(video);
+      hls.on(Hls.Events.ERROR, (_event, data) => {
+        if (data.fatal) {
+          setError(`HLS error: ${data.type} - ${data.details}`);
+        }
+      });
+      return () => {
+        hls.destroy();
+        hlsRef.current = null;
+      };
+    } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
+      video.src = src;
+    } else {
+      setError("HLS is not supported in this browser.");
+    }
+  }, [src]);
+
+  if (error) {
+    return (
+      <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-400">
+        {error}
+      </div>
+    );
+  }
+
+  return (
+    <video
+      ref={videoRef}
+      controls
+      className="w-full rounded-xl bg-black"
+      style={{ maxHeight: 480 }}
+    />
+  );
+}
+
+/* ─── Main Page ─── */
 export default function AdminContentDetailPage() {
   const { toast } = useToast();
   const params = useParams<{ id: string }>();
   const contentId = params?.id;
 
-  const [tab, setTab] = React.useState<"overview" | "assets" | "jobs" | "events" | "edit">("overview");
+  const [tab, setTab] = React.useState<"overview" | "preview" | "edit">("overview");
   const [loading, setLoading] = React.useState(true);
   const [err, setErr] = React.useState<string | null>(null);
-  const [detail, setDetail] = React.useState<ContentDetail | null>(null);
+  const [detail, setDetail] = React.useState<AdminContentDetailDto | null>(null);
   const [polling, setPolling] = React.useState(true);
   const [pollMs, setPollMs] = React.useState(4000);
   const [lastUpdatedAt, setLastUpdatedAt] = React.useState<number | null>(null);
@@ -89,11 +117,11 @@ export default function AdminContentDetailPage() {
   const [savingTaxo, setSavingTaxo] = React.useState(false);
   const [savingStatus, setSavingStatus] = React.useState(false);
 
-  async function fetchDetail({ silent = false }: { silent?: boolean } = {}) {
+  const fetchDetail = React.useCallback(async ({ silent = false }: { silent?: boolean } = {}) => {
     if (!contentId) return;
     if (!silent) { setLoading(true); setErr(null); }
     try {
-      const res = await apiGet<ContentDetail>(`/api/admin/contents/${contentId}`);
+      const res = await apiGet<AdminContentDetailDto>(`/api/admin/contents/${contentId}`);
       setDetail(res);
       setLastUpdatedAt(Date.now());
       setErr(null);
@@ -102,15 +130,15 @@ export default function AdminContentDetailPage() {
     } finally {
       if (!silent) setLoading(false);
     }
-  }
+  }, [contentId]);
 
-  React.useEffect(() => { fetchDetail(); }, [contentId]);
+  React.useEffect(() => { fetchDetail(); }, [fetchDetail]);
 
   React.useEffect(() => {
     if (!polling) return;
     const id = window.setInterval(() => fetchDetail({ silent: true }), pollMs);
     return () => window.clearInterval(id);
-  }, [polling, pollMs, contentId]);
+  }, [polling, pollMs, fetchDetail]);
 
   // Load categories when edit tab is first opened
   React.useEffect(() => {
@@ -142,10 +170,10 @@ export default function AdminContentDetailPage() {
   }
 
   async function onRetry() {
-    if (!contentId) return;
+    if (!detail?.videoAssetId) return;
     try {
-      await apiPost(`/api/admin/contents/${contentId}/retry`, {});
-      toast({ type: "success", title: "Retry requested", description: contentId });
+      await apiPost(`/api/admin/video-assets/${detail.videoAssetId}/retry`, {});
+      toast({ type: "success", title: "Retry requested", description: detail.videoAssetId });
       fetchDetail({ silent: true });
     } catch (e: any) {
       toast({ type: "error", title: "Retry failed", description: e?.message ?? "Unknown" });
@@ -217,29 +245,6 @@ export default function AdminContentDetailPage() {
     );
   }
 
-  type AssetRow = NonNullable<ContentDetail["videoAssets"]>[number];
-  const assetCols = React.useMemo<ColumnDef<AssetRow>[]>(() => [
-    selectColumn<AssetRow>(),
-    { accessorKey: "assetId", header: "Asset ID", cell: ({ getValue }) => <span className="font-mono text-xs">{String(getValue() ?? "")}</span> },
-    { accessorKey: "status", header: "Status", cell: ({ getValue }) => { const s = String(getValue() ?? "-"); return <Badge tone={statusTone(s) as any}>{s}</Badge>; } },
-    { accessorKey: "attemptCount", header: "Attempts", cell: ({ getValue }) => <span className="font-mono text-xs">{String(getValue() ?? 0)}</span> },
-    { accessorKey: "errorMessage", header: "Error", cell: ({ getValue }) => <ExpandableText text={String(getValue() ?? "")} /> },
-    { accessorKey: "updatedAt", header: "Updated", cell: ({ getValue }) => <span className="text-[rgb(var(--fg-secondary))]">{String(getValue() ?? "-")}</span> },
-    actionsColumn<AssetRow>(),
-  ], []);
-
-  type JobRow = NonNullable<ContentDetail["jobs"]>[number];
-  const jobCols = React.useMemo<ColumnDef<JobRow>[]>(() => [
-    selectColumn<JobRow>(),
-    { accessorKey: "jobId", header: "Job ID", cell: ({ getValue }) => <span className="font-mono text-xs">{String(getValue() ?? "")}</span> },
-    { accessorKey: "type", header: "Type", cell: ({ getValue }) => <span className="text-[rgb(var(--fg))]">{String(getValue() ?? "-")}</span> },
-    { accessorKey: "status", header: "Status", cell: ({ getValue }) => { const s = String(getValue() ?? "-"); return <Badge tone={statusTone(s) as any}>{s}</Badge>; } },
-    { accessorKey: "createdAt", header: "Created", cell: ({ getValue }) => <span className="text-[rgb(var(--fg-secondary))]">{String(getValue() ?? "-")}</span> },
-    { accessorKey: "updatedAt", header: "Updated", cell: ({ getValue }) => <span className="text-[rgb(var(--fg-secondary))]">{String(getValue() ?? "-")}</span> },
-    { accessorKey: "errorMessage", header: "Error", cell: ({ getValue }) => <ExpandableText text={String(getValue() ?? "")} /> },
-    actionsColumn<JobRow>(),
-  ], []);
-
   if (loading) return <div className="text-sm text-[rgb(var(--fg-secondary))]">Loading…</div>;
 
   if (err) {
@@ -259,35 +264,30 @@ export default function AdminContentDetailPage() {
 
   if (!detail) return <div className="text-sm text-[rgb(var(--fg-secondary))]">No data</div>;
 
-  const statusA = String(detail.uiStatus ?? detail.contentStatus ?? "UNKNOWN");
-  const assets = detail.videoAssets ?? [];
-  const jobs = detail.jobs ?? [];
-  const events = detail.recentEvents ?? [];
-
-  const failedAssets = assets.filter((a) => (a.status ?? "").toUpperCase().includes("FAIL")).length;
-  const processingAssets = assets.filter((a) => (a.status ?? "").toUpperCase().includes("PROCESS")).length;
+  const uiStatus = String(detail.uiStatus ?? "UNKNOWN");
+  const canPreview = detail.videoAssetStatus === "READY" && !!detail.streamUrl;
 
   const tabs = [
     { key: "overview", label: "Overview" },
-    { key: "assets", label: "Assets", badge: assets.length },
-    { key: "jobs", label: "Jobs", badge: jobs.length },
-    { key: "events", label: "Events", badge: events.length },
+    { key: "preview", label: "Preview", badge: canPreview ? undefined : "N/A" },
     { key: "edit", label: "Edit" },
   ] as const;
 
   return (
     <div className="space-y-4">
+      {/* ─── Header ─── */}
       <Card>
         <CardHeader className="flex flex-col gap-3">
           <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4">
             <div className="min-w-0">
               <div className="flex items-center gap-3">
                 <div className="text-xl font-extrabold tracking-tight">{String(detail.title ?? "Untitled")}</div>
-                <Badge tone={statusTone(statusA) as any}>{statusA}</Badge>
+                <Badge tone={statusTone(uiStatus) as any}>{uiStatus}</Badge>
+                <Badge tone={statusTone(detail.contentStatus) as any}>{String(detail.contentStatus ?? "-")}</Badge>
               </div>
               <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-[rgb(var(--fg-secondary))]">
                 <span className="font-mono text-xs">{detail.contentId}</span>
-                {detail.updatedAt ? <span>• updated: {String(detail.updatedAt)}</span> : null}
+                {detail.updatedAt ? <span>• updated: {formatDate(detail.updatedAt)}</span> : null}
                 {lastUpdatedAt ? (
                   <span className="text-xs text-[rgb(var(--fg-secondary))]">• refreshed: {new Date(lastUpdatedAt).toLocaleTimeString()}</span>
                 ) : null}
@@ -296,8 +296,9 @@ export default function AdminContentDetailPage() {
 
             <div className="flex flex-wrap items-center gap-2">
               <Button tone="primary" className="h-10" onClick={onTranscode}>Transcode</Button>
-              <Button tone="danger" className="h-10" onClick={onRetry}>Retry</Button>
-              <Button tone="secondary" className="h-10" onClick={() => window.open(`/watch/${detail.contentId}`, "_blank")}>Open watch</Button>
+              {detail.videoAssetId && (
+                <Button tone="danger" className="h-10" onClick={onRetry}>Retry</Button>
+              )}
               <Button tone="secondary" className="h-10" onClick={() => fetchDetail()}>Refresh</Button>
               <Button tone="secondary" className="h-10" onClick={() => setPolling((v) => !v)}>
                 Polling: {polling ? "ON" : "OFF"}
@@ -314,26 +315,37 @@ export default function AdminContentDetailPage() {
             </div>
           </div>
 
+          {/* Status summary cards */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
             <div className="rounded-2xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] p-4 shadow-sm">
-              <div className="text-xs font-semibold text-[rgb(var(--fg-secondary))]">Assets</div>
-              <div className="mt-1 text-2xl font-extrabold">{assets.length}</div>
-              <div className="mt-1 text-xs text-[rgb(var(--fg-secondary))]">Total video assets</div>
+              <div className="text-xs font-semibold text-[rgb(var(--fg-secondary))]">Video Asset</div>
+              <div className="mt-1">
+                {detail.videoAssetStatus ? (
+                  <Badge tone={statusTone(detail.videoAssetStatus) as any}>{detail.videoAssetStatus}</Badge>
+                ) : (
+                  <span className="text-sm text-[rgb(var(--fg-secondary))]">No asset</span>
+                )}
+              </div>
             </div>
-            <div className="rounded-2xl border border-red-500/30 bg-red-500/10 p-4 shadow-sm">
-              <div className="text-xs font-semibold text-red-400">Failed</div>
-              <div className="mt-1 text-2xl font-extrabold text-red-400">{failedAssets}</div>
-              <div className="mt-1 text-xs text-red-400">Needs retry/transcode</div>
+            <div className="rounded-2xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] p-4 shadow-sm">
+              <div className="text-xs font-semibold text-[rgb(var(--fg-secondary))]">Latest Job</div>
+              <div className="mt-1">
+                {detail.latestJobStatus ? (
+                  <Badge tone={statusTone(detail.latestJobStatus) as any}>{detail.latestJobStatus}</Badge>
+                ) : (
+                  <span className="text-sm text-[rgb(var(--fg-secondary))]">No jobs</span>
+                )}
+              </div>
             </div>
-            <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4 shadow-sm">
-              <div className="text-xs font-semibold text-amber-400">Processing</div>
-              <div className="mt-1 text-2xl font-extrabold text-amber-400">{processingAssets}</div>
-              <div className="mt-1 text-xs text-amber-400">In progress</div>
+            <div className="rounded-2xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] p-4 shadow-sm">
+              <div className="text-xs font-semibold text-[rgb(var(--fg-secondary))]">Attempts</div>
+              <div className="mt-1 text-2xl font-extrabold">{detail.attemptCount}</div>
             </div>
-            <div className="rounded-2xl border border-[rgb(var(--brand))]/40 bg-violet-500/10 p-4 shadow-sm">
-              <div className="text-xs font-semibold text-violet-400">Jobs</div>
-              <div className="mt-1 text-2xl font-extrabold text-violet-400">{jobs.length}</div>
-              <div className="mt-1 text-xs text-violet-400">Recent job records</div>
+            <div className={`rounded-2xl border p-4 shadow-sm ${canPreview ? "border-green-500/30 bg-green-500/10" : "border-amber-500/30 bg-amber-500/10"}`}>
+              <div className={`text-xs font-semibold ${canPreview ? "text-green-400" : "text-amber-400"}`}>Playback</div>
+              <div className={`mt-1 text-sm font-semibold ${canPreview ? "text-green-400" : "text-amber-400"}`}>
+                {canPreview ? "Ready" : "Not available"}
+              </div>
             </div>
           </div>
         </CardHeader>
@@ -343,158 +355,127 @@ export default function AdminContentDetailPage() {
         </CardContent>
       </Card>
 
+      {/* ─── Overview Tab ─── */}
       {tab === "overview" ? (
         <div className="space-y-4">
           <KeyValue
             cols={3}
             items={[
-              { k: "Content ID", v: <span className="font-mono text-xs">{detail.contentId}</span> },
+              { k: "Content ID", v: <span className="font-mono text-xs break-all">{detail.contentId}</span> },
               { k: "Title", v: String(detail.title ?? "-") },
-              { k: "Status", v: <Badge tone={statusTone(statusA) as any}>{statusA}</Badge> },
-              { k: "HLS", v: detail.hlsPath ? <span className="font-mono text-xs">{String(detail.hlsPath)}</span> : "-" },
-              { k: "Thumbnail", v: detail.thumbnailPath ? <span className="font-mono text-xs">{String(detail.thumbnailPath)}</span> : "-" },
-              { k: "Updated", v: String(detail.updatedAt ?? "-") },
+              { k: "Content Status", v: <Badge tone={statusTone(detail.contentStatus) as any}>{String(detail.contentStatus ?? "-")}</Badge> },
+              { k: "UI Status", v: <Badge tone={statusTone(uiStatus) as any}>{uiStatus}</Badge> },
+              { k: "Video Asset ID", v: detail.videoAssetId ? <span className="font-mono text-xs break-all">{detail.videoAssetId}</span> : "-" },
+              { k: "Video Asset Status", v: detail.videoAssetStatus ? <Badge tone={statusTone(detail.videoAssetStatus) as any}>{detail.videoAssetStatus}</Badge> : "-" },
+              { k: "Source Key", v: detail.sourceKey ? <span className="font-mono text-xs break-all">{detail.sourceKey}</span> : "-" },
+              { k: "HLS Master Key", v: detail.hlsMasterKey ? <span className="font-mono text-xs break-all">{detail.hlsMasterKey}</span> : "-" },
+              { k: "Stream URL", v: detail.streamUrl ? <span className="font-mono text-xs break-all">{detail.streamUrl}</span> : "-" },
+              { k: "Thumbnail URL", v: detail.thumbnailUrl ? <span className="font-mono text-xs break-all">{detail.thumbnailUrl}</span> : "-" },
+              { k: "Attempt Count", v: <span className="font-mono">{detail.attemptCount}</span> },
+              { k: "Latest Job Status", v: detail.latestJobStatus ? <Badge tone={statusTone(detail.latestJobStatus) as any}>{detail.latestJobStatus}</Badge> : "-" },
+              { k: "Latest Error", v: detail.latestErrorMessage ? <span className="text-red-400 text-xs">{detail.latestErrorMessage}</span> : "-" },
+              { k: "Asset Error", v: detail.videoAssetErrorMessage ? <span className="text-red-400 text-xs">{detail.videoAssetErrorMessage}</span> : "-" },
+              { k: "Created At", v: formatDate(detail.createdAt) },
+              { k: "Updated At", v: formatDate(detail.updatedAt) },
             ]}
           />
+
+          {/* Thumbnail preview */}
+          {detail.thumbnailUrl && (
+            <Card>
+              <CardHeader>
+                <div className="text-sm font-semibold">Thumbnail</div>
+              </CardHeader>
+              <CardContent>
+                <img
+                  src={detail.thumbnailUrl}
+                  alt="Thumbnail"
+                  className="rounded-xl max-h-48 object-contain bg-black"
+                />
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Quick links */}
           <Card>
             <CardHeader>
               <div className="text-sm font-semibold">Quick links</div>
             </CardHeader>
             <CardContent className="flex flex-wrap items-center gap-2">
-              {detail.hlsPath ? (
-                <Button tone="secondary" onClick={() => window.open(detail.hlsPath!, "_blank")}>Open HLS</Button>
-              ) : null}
-              {detail.thumbnailPath ? (
-                <Button tone="secondary" onClick={() => window.open(detail.thumbnailPath!, "_blank")}>Open Thumbnail</Button>
-              ) : null}
-              <Button tone="secondary" onClick={() => window.open(`/watch/${detail.contentId}`, "_blank")}>Open Watch Page</Button>
-            </CardContent>
-          </Card>
-        </div>
-      ) : null}
-
-      {tab === "assets" ? (
-        <DataTable<AssetRow>
-          title="Video Assets"
-          description="Inspect asset status and errors."
-          data={assets}
-          columns={assetCols}
-          searchPlaceholder="Search assetId/status/error…"
-          globalSearchText={(r) => `${r.assetId} ${r.status ?? ""} ${r.errorMessage ?? ""}`}
-          rowActions={[
-            {
-              label: "Retry asset",
-              tone: "danger",
-              onClick: async (r) => {
-                try {
-                  await apiPost(`/api/admin/video-assets/${r.assetId}/retry`, {});
-                  toast({ type: "success", title: "Asset retry requested", description: r.assetId });
-                  fetchDetail({ silent: true });
-                } catch (e: any) {
-                  toast({ type: "error", title: "Asset retry failed", description: e?.message });
-                }
-              },
-            },
-            {
-              label: "Copy assetId",
-              onClick: async (r) => {
-                try { await navigator.clipboard.writeText(r.assetId); } catch {}
-                toast({ type: "info", title: "Copied", description: r.assetId });
-              },
-            },
-          ]}
-          bulkActions={[
-            {
-              label: "Bulk Retry",
-              tone: "danger",
-              onClick: async (selected) => {
-                for (const r of selected) {
-                  await apiPost(`/api/admin/video-assets/${r.assetId}/retry`, {});
-                }
-                toast({ type: "success", title: "Bulk retry requested", description: `${selected.length} assets` });
-                fetchDetail({ silent: true });
-              },
-            },
-          ]}
-          initialDensity="compact"
-          initialPageSize={20}
-        />
-      ) : null}
-
-      {tab === "jobs" ? (
-        <DataTable<JobRow>
-          title="Jobs"
-          description="Recent transcode/retry jobs."
-          data={jobs}
-          columns={jobCols}
-          searchPlaceholder="Search jobId/type/status/error…"
-          globalSearchText={(r) => `${r.jobId} ${r.type ?? ""} ${r.status ?? ""} ${r.errorMessage ?? ""}`}
-          rowActions={[
-            {
-              label: "Copy jobId",
-              onClick: async (r) => {
-                try { await navigator.clipboard.writeText(r.jobId); } catch {}
-                toast({ type: "info", title: "Copied", description: r.jobId });
-              },
-            },
-          ]}
-          initialDensity="compact"
-          initialPageSize={20}
-        />
-      ) : null}
-
-      {tab === "events" ? (
-        <div className="space-y-4">
-          <Card>
-            <CardHeader>
-              <div className="text-sm font-semibold">Recent watch events</div>
-            </CardHeader>
-            <CardContent>
-              {events.length ? (
-                <div className="overflow-auto">
-                  <table className="min-w-full text-sm">
-                    <thead className="text-left text-xs font-semibold text-[rgb(var(--fg-secondary))]">
-                      <tr className="border-b border-[rgb(var(--border))]">
-                        <th className="px-4 py-3">Type</th>
-                        <th className="px-4 py-3">Position</th>
-                        <th className="px-4 py-3">User</th>
-                        <th className="px-4 py-3">Created</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {events.map((e) => (
-                        <tr key={e.id} className="border-b border-[rgb(var(--border))] hover:bg-[rgb(var(--muted))]/60">
-                          <td className="px-4 py-3"><Badge tone="brand">{e.type}</Badge></td>
-                          <td className="px-4 py-3 font-mono text-xs">{String(e.positionMs ?? "-")}</td>
-                          <td className="px-4 py-3 font-mono text-xs">{String(e.userId ?? "-")}</td>
-                          <td className="px-4 py-3 text-[rgb(var(--fg-secondary))]">{String(e.createdAt ?? "-")}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              ) : (
-                <div className="text-sm text-[rgb(var(--fg-secondary))]">No events yet.</div>
+              {detail.streamUrl && (
+                <Button tone="secondary" onClick={() => window.open(detail.streamUrl!, "_blank")}>Open HLS URL</Button>
+              )}
+              {detail.thumbnailUrl && (
+                <Button tone="secondary" onClick={() => window.open(detail.thumbnailUrl!, "_blank")}>Open Thumbnail</Button>
+              )}
+              <Button tone="secondary" onClick={() => navigator.clipboard.writeText(detail.contentId).then(() => toast({ type: "info", title: "Copied Content ID" }))}>
+                Copy Content ID
+              </Button>
+              {detail.videoAssetId && (
+                <Button tone="secondary" onClick={() => navigator.clipboard.writeText(detail.videoAssetId!).then(() => toast({ type: "info", title: "Copied Asset ID" }))}>
+                  Copy Asset ID
+                </Button>
               )}
             </CardContent>
           </Card>
-          <Card>
-            <CardHeader><div className="text-sm font-semibold">Debug helpers</div></CardHeader>
-            <CardContent className="flex flex-wrap items-center gap-2">
-              <Button tone="secondary" onClick={() => window.open(`/api/app/contents/${detail.contentId}`, "_blank")}>Open app content API</Button>
-              <Button tone="secondary" onClick={() => window.open(`/api/app/watch-events?contentId=${detail.contentId}`, "_blank")}>Query watch-events</Button>
-            </CardContent>
-          </Card>
         </div>
       ) : null}
 
+      {/* ─── Preview Tab (Video Player) ─── */}
+      {tab === "preview" ? (
+        <div className="space-y-4">
+          {canPreview ? (
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-sm font-semibold">Video Player</div>
+                    <div className="text-xs text-[rgb(var(--fg-secondary))] mt-1 font-mono break-all">{detail.streamUrl}</div>
+                  </div>
+                  <Badge tone="success">READY</Badge>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <HlsPlayer src={detail.streamUrl!} />
+              </CardContent>
+            </Card>
+          ) : (
+            <Card>
+              <CardContent>
+                <div className="flex flex-col items-center justify-center py-12 text-center">
+                  <div className="text-4xl mb-4">🎬</div>
+                  <div className="text-lg font-semibold text-[rgb(var(--fg))]">Video not available</div>
+                  <div className="mt-2 text-sm text-[rgb(var(--fg-secondary))] max-w-md">
+                    {!detail.videoAssetId
+                      ? "No video asset linked to this content. Upload a video first."
+                      : detail.videoAssetStatus === "TRANSCODING"
+                        ? "Transcoding is in progress. The player will be available once transcoding completes."
+                        : detail.videoAssetStatus === "UPLOADED"
+                          ? "Video is uploaded but not yet transcoded. Click Transcode to start."
+                          : detail.videoAssetStatus === "FAILED"
+                            ? "Transcoding failed. Check the error details and retry."
+                            : "Stream URL is not available yet."}
+                  </div>
+                  {detail.videoAssetStatus && (
+                    <div className="mt-4">
+                      <Badge tone={statusTone(detail.videoAssetStatus) as any}>{detail.videoAssetStatus}</Badge>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      ) : null}
+
+      {/* ─── Edit Tab ─── */}
       {tab === "edit" ? (
         <div className="space-y-4">
           {/* Status change */}
           <Card>
             <CardHeader>
               <div className="text-sm font-semibold">Change Status</div>
-              <div className="text-xs text-[rgb(var(--fg-secondary))]">Current: <Badge tone={statusTone(statusA) as any}>{statusA}</Badge></div>
+              <div className="text-xs text-[rgb(var(--fg-secondary))]">Current: <Badge tone={statusTone(detail.contentStatus) as any}>{String(detail.contentStatus ?? "-")}</Badge></div>
             </CardHeader>
             <CardContent>
               <div className="flex items-center gap-3">
