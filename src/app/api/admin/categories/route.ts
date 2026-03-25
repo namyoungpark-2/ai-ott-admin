@@ -1,34 +1,15 @@
-import { cookies } from "next/headers";
-import { NextResponse } from "next/server";
-
-const BASE = "http://localhost:8080";
-
-async function getToken() {
-  const cookieStore = await cookies();
-  return cookieStore.get("admin_access_token")?.value ?? null;
-}
+import { NextRequest } from "next/server";
+import { authedBackendFetch } from "@/lib/backend";
 
 export async function GET() {
-  const token = await getToken();
-  if (!token) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-
-  const r = await fetch(`${BASE}/api/admin/categories`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  const text = await r.text();
-  return new NextResponse(text, { status: r.status });
+  return authedBackendFetch("/api/admin/categories");
 }
 
-export async function POST(req: Request) {
-  const token = await getToken();
-  if (!token) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-
+export async function POST(req: NextRequest) {
   const body = await req.text();
-  const r = await fetch(`${BASE}/api/admin/categories`, {
+  return authedBackendFetch("/api/admin/categories", {
     method: "POST",
-    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json" },
     body,
   });
-  const text = await r.text();
-  return new NextResponse(text, { status: r.status });
 }
