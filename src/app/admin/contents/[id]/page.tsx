@@ -1,6 +1,4 @@
 "use client";
-/* eslint-disable react-compiler/react-compiler */
-"use no memo";
 
 import { ColumnDef } from "@tanstack/react-table";
 import { useParams } from "next/navigation";
@@ -219,6 +217,29 @@ export default function AdminContentDetailPage() {
     );
   }
 
+  type AssetRow = NonNullable<ContentDetail["videoAssets"]>[number];
+  const assetCols = React.useMemo<ColumnDef<AssetRow>[]>(() => [
+    selectColumn<AssetRow>(),
+    { accessorKey: "assetId", header: "Asset ID", cell: ({ getValue }) => <span className="font-mono text-xs">{String(getValue() ?? "")}</span> },
+    { accessorKey: "status", header: "Status", cell: ({ getValue }) => { const s = String(getValue() ?? "-"); return <Badge tone={statusTone(s) as any}>{s}</Badge>; } },
+    { accessorKey: "attemptCount", header: "Attempts", cell: ({ getValue }) => <span className="font-mono text-xs">{String(getValue() ?? 0)}</span> },
+    { accessorKey: "errorMessage", header: "Error", cell: ({ getValue }) => <ExpandableText text={String(getValue() ?? "")} /> },
+    { accessorKey: "updatedAt", header: "Updated", cell: ({ getValue }) => <span className="text-[rgb(var(--fg-secondary))]">{String(getValue() ?? "-")}</span> },
+    actionsColumn<AssetRow>(),
+  ], []);
+
+  type JobRow = NonNullable<ContentDetail["jobs"]>[number];
+  const jobCols = React.useMemo<ColumnDef<JobRow>[]>(() => [
+    selectColumn<JobRow>(),
+    { accessorKey: "jobId", header: "Job ID", cell: ({ getValue }) => <span className="font-mono text-xs">{String(getValue() ?? "")}</span> },
+    { accessorKey: "type", header: "Type", cell: ({ getValue }) => <span className="text-[rgb(var(--fg))]">{String(getValue() ?? "-")}</span> },
+    { accessorKey: "status", header: "Status", cell: ({ getValue }) => { const s = String(getValue() ?? "-"); return <Badge tone={statusTone(s) as any}>{s}</Badge>; } },
+    { accessorKey: "createdAt", header: "Created", cell: ({ getValue }) => <span className="text-[rgb(var(--fg-secondary))]">{String(getValue() ?? "-")}</span> },
+    { accessorKey: "updatedAt", header: "Updated", cell: ({ getValue }) => <span className="text-[rgb(var(--fg-secondary))]">{String(getValue() ?? "-")}</span> },
+    { accessorKey: "errorMessage", header: "Error", cell: ({ getValue }) => <ExpandableText text={String(getValue() ?? "")} /> },
+    actionsColumn<JobRow>(),
+  ], []);
+
   if (loading) return <div className="text-sm text-[rgb(var(--fg-secondary))]">Loading…</div>;
 
   if (err) {
@@ -253,29 +274,6 @@ export default function AdminContentDetailPage() {
     { key: "events", label: "Events", badge: events.length },
     { key: "edit", label: "Edit" },
   ] as const;
-
-  type AssetRow = NonNullable<ContentDetail["videoAssets"]>[number];
-  const assetCols = React.useMemo<ColumnDef<AssetRow>[]>(() => [
-    selectColumn<AssetRow>(),
-    { accessorKey: "assetId", header: "Asset ID", cell: ({ getValue }) => <span className="font-mono text-xs">{String(getValue() ?? "")}</span> },
-    { accessorKey: "status", header: "Status", cell: ({ getValue }) => { const s = String(getValue() ?? "-"); return <Badge tone={statusTone(s) as any}>{s}</Badge>; } },
-    { accessorKey: "attemptCount", header: "Attempts", cell: ({ getValue }) => <span className="font-mono text-xs">{String(getValue() ?? 0)}</span> },
-    { accessorKey: "errorMessage", header: "Error", cell: ({ getValue }) => <ExpandableText text={String(getValue() ?? "")} /> },
-    { accessorKey: "updatedAt", header: "Updated", cell: ({ getValue }) => <span className="text-[rgb(var(--fg-secondary))]">{String(getValue() ?? "-")}</span> },
-    actionsColumn<AssetRow>(),
-  ], []);
-
-  type JobRow = NonNullable<ContentDetail["jobs"]>[number];
-  const jobCols = React.useMemo<ColumnDef<JobRow>[]>(() => [
-    selectColumn<JobRow>(),
-    { accessorKey: "jobId", header: "Job ID", cell: ({ getValue }) => <span className="font-mono text-xs">{String(getValue() ?? "")}</span> },
-    { accessorKey: "type", header: "Type", cell: ({ getValue }) => <span className="text-[rgb(var(--fg))]">{String(getValue() ?? "-")}</span> },
-    { accessorKey: "status", header: "Status", cell: ({ getValue }) => { const s = String(getValue() ?? "-"); return <Badge tone={statusTone(s) as any}>{s}</Badge>; } },
-    { accessorKey: "createdAt", header: "Created", cell: ({ getValue }) => <span className="text-[rgb(var(--fg-secondary))]">{String(getValue() ?? "-")}</span> },
-    { accessorKey: "updatedAt", header: "Updated", cell: ({ getValue }) => <span className="text-[rgb(var(--fg-secondary))]">{String(getValue() ?? "-")}</span> },
-    { accessorKey: "errorMessage", header: "Error", cell: ({ getValue }) => <ExpandableText text={String(getValue() ?? "")} /> },
-    actionsColumn<JobRow>(),
-  ], []);
 
   return (
     <div className="space-y-4">
