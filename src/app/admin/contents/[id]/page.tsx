@@ -229,8 +229,9 @@ export default function AdminContentDetailPage() {
         status: metaStatus || undefined,
       };
       await apiPut(`/api/admin/contents/${contentId}/metadata`, cmd);
-      toast({ type: "success", title: "Metadata saved" });
-      fetchDetail({ silent: true });
+      toast({ type: "success", title: "Metadata saved", description: "Changes applied successfully." });
+      await fetchDetail({ silent: true });
+      setTab("overview");
     } catch (e: any) {
       toast({ type: "error", title: "Failed to save metadata", description: e?.message });
     } finally {
@@ -248,7 +249,9 @@ export default function AdminContentDetailPage() {
         tags: taxoTags.split(",").map((t) => t.trim()).filter(Boolean),
       };
       await apiPut(`/api/admin/contents/${contentId}/taxonomy`, cmd);
-      toast({ type: "success", title: "Taxonomy saved" });
+      toast({ type: "success", title: "Taxonomy saved", description: "Changes applied successfully." });
+      await fetchDetail({ silent: true });
+      setTab("overview");
     } catch (e: any) {
       toast({ type: "error", title: "Failed to save taxonomy", description: e?.message });
     } finally {
@@ -261,8 +264,9 @@ export default function AdminContentDetailPage() {
     setSavingStatus(true);
     try {
       await apiPatch(`/api/admin/contents/${contentId}/status`, { status: changeStatus });
-      toast({ type: "success", title: `Status changed to ${changeStatus}` });
-      fetchDetail({ silent: true });
+      toast({ type: "success", title: `Status changed to ${changeStatus}`, description: "Status updated successfully." });
+      await fetchDetail({ silent: true });
+      setTab("overview");
     } catch (e: any) {
       toast({ type: "error", title: "Failed to change status", description: e?.message });
     } finally {
