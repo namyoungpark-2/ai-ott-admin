@@ -19,7 +19,17 @@
       "Bash(git push:*)",
       "Bash(pnpm install:*)",
       "Bash(npx tsc:*)",
-      "Bash(pnpm add:*)"
+      "Bash(pnpm add:*)",
+      "Bash(lsof -ti:3000)",
+      "Bash(xargs kill:*)",
+      "Bash(ls /Users/namyoungpark/ai-ott/ai-ott-admin/.next/dev/static/chunks/src_app_admin_contents_*)",
+      "Bash(find /Users/namyoungpark/ai-ott/ai-ott-admin/.next/static -name *.js)",
+      "Bash(tr ';' '\\\\n')",
+      "Bash(for f:*)",
+      "Bash(do echo:*)",
+      "Bash(uniq -c done)",
+      "Bash(npx opennextjs-cloudflare:*)",
+      "Bash(ls:*)"
     ]
   }
 }
