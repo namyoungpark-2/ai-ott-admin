@@ -93,6 +93,9 @@ export default function AdminContentDetailPage() {
   const [tab, setTab] = React.useState<"overview" | "preview" | "edit">("overview");
   const [loading, setLoading] = React.useState(true);
   const [err, setErr] = React.useState<string | null>(null);
+  const [uploadFile, setUploadFile] = React.useState<File | null>(null);
+  const [uploading, setUploading] = React.useState(false);
+  const [uploadProgress, setUploadProgress] = React.useState<string | null>(null);
   const [detail, setDetail] = React.useState<AdminContentDetailDto | null>(null);
   const [polling, setPolling] = React.useState(true);
   const [pollMs, setPollMs] = React.useState(4000);
@@ -177,6 +180,34 @@ export default function AdminContentDetailPage() {
       fetchDetail({ silent: true });
     } catch (e: any) {
       toast({ type: "error", title: "Retry failed", description: e?.message ?? "Unknown" });
+    }
+  }
+
+  async function onUploadAsset() {
+    if (!contentId || !uploadFile) return;
+    setUploading(true);
+    setUploadProgress("Uploading…");
+    try {
+      const fd = new FormData();
+      fd.append("file", uploadFile);
+      const r = await fetch(`/api/admin/contents/${contentId}/assets`, {
+        method: "POST",
+        body: fd,
+        credentials: "include",
+      });
+      if (!r.ok) {
+        const text = await r.text();
+        throw new Error(text || `${r.status} ${r.statusText}`);
+      }
+      toast({ type: "success", title: "Video asset uploaded", description: "Transcoding will start automatically." });
+      setUploadFile(null);
+      setUploadProgress(null);
+      fetchDetail({ silent: true });
+    } catch (e: any) {
+      toast({ type: "error", title: "Upload failed", description: e?.message ?? "Unknown" });
+      setUploadProgress(null);
+    } finally {
+      setUploading(false);
     }
   }
 
@@ -392,6 +423,44 @@ export default function AdminContentDetailPage() {
                   alt="Thumbnail"
                   className="rounded-xl max-h-48 object-contain bg-black"
                 />
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Upload video asset */}
+          {!detail.videoAssetId && (
+            <Card>
+              <CardHeader>
+                <div className="text-sm font-semibold">Upload Video Asset</div>
+                <div className="text-xs text-[rgb(var(--fg-secondary))]">
+                  No video asset linked. Upload a video file to create an asset and start transcoding automatically.
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <input
+                    type="file"
+                    accept="video/*"
+                    className="w-full rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] px-3 py-2 text-sm"
+                    onChange={(e) => setUploadFile(e.target.files?.[0] ?? null)}
+                    disabled={uploading}
+                  />
+                  {uploadFile && (
+                    <div className="text-xs text-[rgb(var(--fg-secondary))]">
+                      {uploadFile.name} ({(uploadFile.size / 1024 / 1024).toFixed(1)} MB)
+                    </div>
+                  )}
+                  {uploadProgress && (
+                    <div className="text-xs text-amber-400">{uploadProgress}</div>
+                  )}
+                  <Button
+                    tone="primary"
+                    onClick={onUploadAsset}
+                    disabled={!uploadFile || uploading}
+                  >
+                    {uploading ? "Uploading…" : "Upload & Transcode"}
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           )}
