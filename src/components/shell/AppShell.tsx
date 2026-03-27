@@ -6,6 +6,7 @@ import { cx } from "@/components/ui";
 import { CommandButton } from "@/components/command/CommandButton";
 import { UserMenu } from "@/components/shell/UserMenu";
 import { useTheme } from "@/components/theme/ThemeProvider";
+import { useLanguage, LANG_OPTIONS } from "@/components/language/LanguageProvider";
 
 /* ─── Nav Icons ─────────────────────────────────────────────────────── */
 function IconDashboard() {
@@ -125,6 +126,27 @@ function ThemeToggle() {
         </svg>
       )}
     </button>
+  );
+}
+
+/* ─── Language Selector ────────────────────────────────────────────── */
+function LanguageSelector() {
+  const { lang, setLang } = useLanguage();
+  return (
+    <select
+      value={lang}
+      onChange={(e) => setLang(e.target.value as typeof lang)}
+      aria-label="Select language"
+      className={cx(
+        "h-8 rounded-xl px-2 text-xs font-semibold",
+        "border border-[rgb(var(--border))] bg-[rgb(var(--card))]",
+        "text-[rgb(var(--fg))]/60 hover:text-[rgb(var(--fg))] transition cursor-pointer"
+      )}
+    >
+      {LANG_OPTIONS.map((o) => (
+        <option key={o.value} value={o.value}>{o.label}</option>
+      ))}
+    </select>
   );
 }
 
@@ -257,6 +279,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               </div>
 
               <div className="ml-auto flex items-center gap-2">
+                <LanguageSelector />
                 <ThemeToggle />
                 <CommandButton />
                 <UserMenu />

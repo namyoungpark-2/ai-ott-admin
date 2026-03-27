@@ -6,10 +6,12 @@ import { Button, Card, CardContent, CardHeader, Input } from "@/components/ui";
 import { DataTable } from "@/components/table/DataTable";
 import { useToast } from "@/components/toast";
 import { apiGet, apiPost } from "@/lib/http";
+import { useLanguage } from "@/components/language/LanguageProvider";
 import type { AdminGenreResult } from "@/lib/types";
 
 export default function GenresPage() {
   const { toast } = useToast();
+  const { lang } = useLanguage();
   const [rows, setRows] = React.useState<AdminGenreResult[]>([]);
   const [loading, setLoading] = React.useState(true);
 
@@ -17,7 +19,6 @@ export default function GenresPage() {
   const [slug, setSlug] = React.useState("");
   const [label, setLabel] = React.useState("");
   const [description, setDescription] = React.useState("");
-  const [lang, setLang] = React.useState("en");
   const [creating, setCreating] = React.useState(false);
 
   async function refresh() {
@@ -49,7 +50,7 @@ export default function GenresPage() {
         lang,
       });
       toast({ type: "success", title: "Genre created" });
-      setSlug(""); setLabel(""); setDescription(""); setLang("en");
+      setSlug(""); setLabel(""); setDescription("");
       refresh();
     } catch (e: any) {
       toast({ type: "error", title: "Failed to create genre", description: e?.message });
@@ -86,7 +87,7 @@ export default function GenresPage() {
         </CardHeader>
         <CardContent>
           <form onSubmit={onCreate} className="space-y-3">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div className="space-y-1">
                 <label className="text-xs font-semibold text-[rgb(var(--fg-secondary))]">Slug *</label>
                 <Input
@@ -104,19 +105,6 @@ export default function GenresPage() {
                   onChange={(e) => setLabel(e.target.value)}
                   required
                 />
-              </div>
-              <div className="space-y-1">
-                <label className="text-xs font-semibold text-[rgb(var(--fg-secondary))]">Language</label>
-                <select
-                  className="h-10 w-full rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] px-3 text-sm"
-                  value={lang}
-                  onChange={(e) => setLang(e.target.value)}
-                >
-                  <option value="en">English (en)</option>
-                  <option value="ko">Korean (ko)</option>
-                  <option value="ja">Japanese (ja)</option>
-                  <option value="zh">Chinese (zh)</option>
-                </select>
               </div>
             </div>
             <div className="space-y-1">

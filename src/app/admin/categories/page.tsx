@@ -6,10 +6,12 @@ import { Badge, Button, Card, CardContent, CardHeader, Input } from "@/component
 import { DataTable } from "@/components/table/DataTable";
 import { useToast } from "@/components/toast";
 import { apiGet, apiPost, apiPut, apiDelete } from "@/lib/http";
+import { useLanguage } from "@/components/language/LanguageProvider";
 import type { AdminCategoryResult } from "@/lib/types";
 
 export default function CategoriesPage() {
   const { toast } = useToast();
+  const { lang } = useLanguage();
   const [rows, setRows] = React.useState<AdminCategoryResult[]>([]);
   const [loading, setLoading] = React.useState(true);
 
@@ -22,7 +24,6 @@ export default function CategoriesPage() {
   const [iabCode, setIabCode] = React.useState("");
   const [tier, setTier] = React.useState("1");
   const [parentSlug, setParentSlug] = React.useState("");
-  const [lang, setLang] = React.useState("en");
   const [creating, setCreating] = React.useState(false);
 
   // Edit state
@@ -71,7 +72,7 @@ export default function CategoriesPage() {
       });
       toast({ type: "success", title: "Category created" });
       setSlug(""); setLabel(""); setDescription(""); setSortOrder("0");
-      setActive(true); setIabCode(""); setTier("1"); setParentSlug(""); setLang("en");
+      setActive(true); setIabCode(""); setTier("1"); setParentSlug("");
       refresh();
     } catch (e: any) {
       toast({ type: "error", title: "Failed to create", description: e?.message });
@@ -337,20 +338,7 @@ export default function CategoriesPage() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-              <div className="space-y-1">
-                <label className="text-xs font-semibold text-[rgb(var(--fg-secondary))]">Language</label>
-                <select
-                  className="h-10 w-full rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] px-3 text-sm"
-                  value={lang}
-                  onChange={(e) => setLang(e.target.value)}
-                >
-                  <option value="en">English (en)</option>
-                  <option value="ko">Korean (ko)</option>
-                  <option value="ja">Japanese (ja)</option>
-                  <option value="zh">Chinese (zh)</option>
-                </select>
-              </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div className="space-y-1">
                 <label className="text-xs font-semibold text-[rgb(var(--fg-secondary))]">Sort Order</label>
                 <Input

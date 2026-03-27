@@ -1,4 +1,4 @@
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { NextResponse } from "next/server";
 
 const API_BASE =
@@ -22,12 +22,16 @@ export async function backendFetch(
   path: string,
   init?: RequestInit,
 ): Promise<NextResponse> {
+  const reqHeaders = await headers();
+  const acceptLang = reqHeaders.get("accept-language") || "en";
+
   let r: Response;
   try {
     r = await fetch(`${API_BASE}${path}`, {
       ...init,
       headers: {
         "ngrok-skip-browser-warning": "true",
+        "Accept-Language": acceptLang,
         ...init?.headers,
       },
     });

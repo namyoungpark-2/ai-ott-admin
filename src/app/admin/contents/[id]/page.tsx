@@ -9,6 +9,7 @@ import { Tabs } from "@/components/tabs/Tab";
 import { useToast } from "@/components/toast";
 import { Badge, Button, Card, CardContent, CardHeader, Input } from "@/components/ui";
 import { apiGet, apiPost, apiPut, apiPatch } from "@/lib/http";
+import { useLanguage } from "@/components/language/LanguageProvider";
 import type {
   AdminContentDetailDto,
   AdminCategoryResult,
@@ -90,6 +91,7 @@ export default function AdminContentDetailPage() {
   const { toast } = useToast();
   const params = useParams<{ id: string }>();
   const contentId = params?.id;
+  const { lang: globalLang } = useLanguage();
 
   const [tab, setTab] = React.useState<"overview" | "preview" | "edit">("overview");
   const [loading, setLoading] = React.useState(true);
@@ -104,7 +106,7 @@ export default function AdminContentDetailPage() {
 
   // Edit tab state
   const [categories, setCategories] = React.useState<AdminCategoryResult[]>([]);
-  const [metaLang, setMetaLang] = React.useState("en");
+  const [metaLang, setMetaLang] = React.useState<string>(globalLang);
   const [metaTitle, setMetaTitle] = React.useState("");
   const [metaDesc, setMetaDesc] = React.useState("");
   const [metaRuntime, setMetaRuntime] = React.useState("");

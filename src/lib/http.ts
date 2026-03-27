@@ -1,3 +1,17 @@
+const STORAGE_KEY = "admin_lang";
+
+function getLang(): string {
+  if (typeof window === "undefined") return "en";
+  return localStorage.getItem(STORAGE_KEY) || "en";
+}
+
+function baseHeaders(): Record<string, string> {
+  return {
+    "Content-Type": "application/json",
+    "Accept-Language": getLang(),
+  };
+}
+
 function handleResponse(r: Response): void {
   if (r.status === 401 && typeof window !== "undefined") {
     const current = window.location.pathname;
@@ -15,7 +29,7 @@ function handleResponse(r: Response): void {
 export async function apiGet<T>(path: string): Promise<T> {
   const r = await fetch(path, {
     method: "GET",
-    headers: { "Content-Type": "application/json" },
+    headers: baseHeaders(),
     cache: "no-store",
     credentials: "include",
   });
@@ -27,7 +41,7 @@ export async function apiGet<T>(path: string): Promise<T> {
 export async function apiPost<T>(path: string, body?: unknown): Promise<T> {
   const r = await fetch(path, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: baseHeaders(),
     body: body ? JSON.stringify(body) : undefined,
     credentials: "include",
   });
@@ -39,7 +53,7 @@ export async function apiPost<T>(path: string, body?: unknown): Promise<T> {
 export async function apiPut<T>(path: string, body?: unknown): Promise<T | void> {
   const r = await fetch(path, {
     method: "PUT",
-    headers: { "Content-Type": "application/json" },
+    headers: baseHeaders(),
     body: body ? JSON.stringify(body) : undefined,
     credentials: "include",
   });
@@ -53,6 +67,7 @@ export async function apiPut<T>(path: string, body?: unknown): Promise<T | void>
 export async function apiDelete(path: string): Promise<void> {
   const r = await fetch(path, {
     method: "DELETE",
+    headers: { "Accept-Language": getLang() },
     credentials: "include",
   });
   handleResponse(r);
@@ -64,6 +79,7 @@ export async function apiPatch<T>(path: string, params?: Record<string, string>)
     : path;
   const r = await fetch(url, {
     method: "PATCH",
+    headers: { "Accept-Language": getLang() },
     credentials: "include",
   });
 
