@@ -124,7 +124,51 @@ export default function CategoriesPage() {
     [rows]
   );
 
+  async function bulkSetActive(selectedRows: AdminCategoryResult[], value: boolean) {
+    const label = value ? "Activate" : "Deactivate";
+    try {
+      await Promise.all(
+        selectedRows.map((row) =>
+          apiPut(`/api/admin/categories/${encodeURIComponent(row.slug)}`, {
+            label: row.label,
+            description: row.description ?? undefined,
+            sortOrder: row.sortOrder,
+            active: value,
+            iabCode: row.iabCode ?? undefined,
+            tier: row.tier ?? undefined,
+            parentSlug: row.parentSlug ?? undefined,
+          })
+        )
+      );
+      toast({ type: "success", title: `${label}d ${selectedRows.length} categories` });
+      refresh();
+    } catch (e: any) {
+      toast({ type: "error", title: `Failed to ${label.toLowerCase()}`, description: e?.message });
+    }
+  }
+
   const columns = React.useMemo<ColumnDef<AdminCategoryResult>[]>(() => [
+    {
+      id: "__select",
+      header: ({ table }) => (
+        <input
+          type="checkbox"
+          className="h-4 w-4 rounded"
+          checked={table.getIsAllPageRowsSelected()}
+          onChange={table.getToggleAllPageRowsSelectedHandler()}
+        />
+      ),
+      cell: ({ row }) => (
+        <input
+          type="checkbox"
+          className="h-4 w-4 rounded"
+          checked={row.getIsSelected()}
+          onChange={row.getToggleSelectedHandler()}
+        />
+      ),
+      enableSorting: false,
+      enableHiding: false,
+    },
     {
       accessorKey: "slug",
       header: "Slug",
@@ -425,6 +469,17 @@ export default function CategoriesPage() {
         initialDensity="compact"
         initialPageSize={20}
         rowActions={rowActions}
+        bulkActions={[
+          {
+            label: "Activate",
+            onClick: (selected) => bulkSetActive(selected, true),
+          },
+          {
+            label: "Deactivate",
+            onClick: (selected) => bulkSetActive(selected, false),
+            tone: "danger",
+          },
+        ]}
       />
     </div>
   );
