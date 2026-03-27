@@ -19,6 +19,10 @@ export default function CategoriesPage() {
   const [description, setDescription] = React.useState("");
   const [sortOrder, setSortOrder] = React.useState("0");
   const [active, setActive] = React.useState(true);
+  const [iabCode, setIabCode] = React.useState("");
+  const [tier, setTier] = React.useState("1");
+  const [parentSlug, setParentSlug] = React.useState("");
+  const [lang, setLang] = React.useState("en");
   const [creating, setCreating] = React.useState(false);
 
   async function refresh() {
@@ -49,9 +53,14 @@ export default function CategoriesPage() {
         description: description.trim() || undefined,
         sortOrder: Number(sortOrder),
         active,
+        iabCode: iabCode.trim() || undefined,
+        tier: Number(tier),
+        parentSlug: parentSlug.trim() || undefined,
+        lang,
       });
       toast({ type: "success", title: "Category created" });
-      setSlug(""); setLabel(""); setDescription(""); setSortOrder("0"); setActive(true);
+      setSlug(""); setLabel(""); setDescription(""); setSortOrder("0");
+      setActive(true); setIabCode(""); setTier("1"); setParentSlug(""); setLang("en");
       refresh();
     } catch (e: any) {
       toast({ type: "error", title: "Failed to create", description: e?.message });
@@ -59,6 +68,11 @@ export default function CategoriesPage() {
       setCreating(false);
     }
   }
+
+  const parentOptions = React.useMemo(
+    () => rows.filter((r) => r.tier === 1 || r.parentSlug === null),
+    [rows]
+  );
 
   const columns = React.useMemo<ColumnDef<AdminCategoryResult>[]>(() => [
     {
@@ -68,9 +82,25 @@ export default function CategoriesPage() {
     },
     { accessorKey: "label", header: "Label" },
     {
-      accessorKey: "description",
-      header: "Description",
-      cell: ({ getValue }) => <span className="text-[rgb(var(--fg-secondary))] text-xs">{String(getValue() ?? "-")}</span>,
+      accessorKey: "tier",
+      header: "Tier",
+      cell: ({ getValue }) => <span className="font-mono text-xs">{getValue() != null ? String(getValue()) : "-"}</span>,
+    },
+    {
+      accessorKey: "parentSlug",
+      header: "Parent",
+      cell: ({ getValue }) => {
+        const v = getValue();
+        return v ? <span className="font-mono text-xs">{String(v)}</span> : <span className="text-[rgb(var(--fg-secondary))] text-xs">-</span>;
+      },
+    },
+    {
+      accessorKey: "iabCode",
+      header: "IAB Code",
+      cell: ({ getValue }) => {
+        const v = getValue();
+        return v ? <span className="font-mono text-xs">{String(v)}</span> : <span className="text-[rgb(var(--fg-secondary))] text-xs">-</span>;
+      },
     },
     {
       accessorKey: "sortOrder",
@@ -107,7 +137,7 @@ export default function CategoriesPage() {
               <div className="space-y-1">
                 <label className="text-xs font-semibold text-[rgb(var(--fg-secondary))]">Slug *</label>
                 <Input
-                  placeholder="e.g. action"
+                  placeholder="e.g. tv-comedy"
                   value={slug}
                   onChange={(e) => setSlug(e.target.value)}
                   required
@@ -116,13 +146,14 @@ export default function CategoriesPage() {
               <div className="space-y-1">
                 <label className="text-xs font-semibold text-[rgb(var(--fg-secondary))]">Label *</label>
                 <Input
-                  placeholder="e.g. Action"
+                  placeholder="e.g. TV Comedy"
                   value={label}
                   onChange={(e) => setLabel(e.target.value)}
                   required
                 />
               </div>
             </div>
+
             <div className="space-y-1">
               <label className="text-xs font-semibold text-[rgb(var(--fg-secondary))]">Description</label>
               <Input
@@ -131,7 +162,57 @@ export default function CategoriesPage() {
                 onChange={(e) => setDescription(e.target.value)}
               />
             </div>
-            <div className="grid grid-cols-2 gap-3">
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-[rgb(var(--fg-secondary))]">IAB Code</label>
+                <Input
+                  placeholder="e.g. IAB1-1"
+                  value={iabCode}
+                  onChange={(e) => setIabCode(e.target.value)}
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-[rgb(var(--fg-secondary))]">Tier</label>
+                <select
+                  className="h-10 w-full rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] px-3 text-sm"
+                  value={tier}
+                  onChange={(e) => setTier(e.target.value)}
+                >
+                  <option value="1">Tier 1 (Top-level)</option>
+                  <option value="2">Tier 2 (Sub-category)</option>
+                  <option value="3">Tier 3</option>
+                </select>
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-[rgb(var(--fg-secondary))]">Parent Category</label>
+                <select
+                  className="h-10 w-full rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] px-3 text-sm"
+                  value={parentSlug}
+                  onChange={(e) => setParentSlug(e.target.value)}
+                >
+                  <option value="">None (top-level)</option>
+                  {parentOptions.map((c) => (
+                    <option key={c.slug} value={c.slug}>{c.label} ({c.slug})</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-[rgb(var(--fg-secondary))]">Language</label>
+                <select
+                  className="h-10 w-full rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] px-3 text-sm"
+                  value={lang}
+                  onChange={(e) => setLang(e.target.value)}
+                >
+                  <option value="en">English (en)</option>
+                  <option value="ko">Korean (ko)</option>
+                  <option value="ja">Japanese (ja)</option>
+                  <option value="zh">Chinese (zh)</option>
+                </select>
+              </div>
               <div className="space-y-1">
                 <label className="text-xs font-semibold text-[rgb(var(--fg-secondary))]">Sort Order</label>
                 <Input
@@ -152,6 +233,7 @@ export default function CategoriesPage() {
                 </label>
               </div>
             </div>
+
             <Button type="submit" tone="primary" disabled={creating || !slug.trim() || !label.trim()}>
               {creating ? "Creating…" : "Create Category"}
             </Button>

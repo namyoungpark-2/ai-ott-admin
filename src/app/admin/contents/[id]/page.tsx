@@ -12,6 +12,7 @@ import { apiGet, apiPost, apiPut, apiPatch } from "@/lib/http";
 import type {
   AdminContentDetailDto,
   AdminCategoryResult,
+  AdminGenreResult,
   AdminUpdateMetadataCommand,
   AdminUpdateTaxonomyCommand,
 } from "@/lib/types";
@@ -113,7 +114,9 @@ export default function AdminContentDetailPage() {
   const [metaAgeRating, setMetaAgeRating] = React.useState("");
   const [metaFeatured, setMetaFeatured] = React.useState(false);
   const [metaStatus, setMetaStatus] = React.useState("DRAFT");
+  const [genres, setGenres] = React.useState<AdminGenreResult[]>([]);
   const [taxoCategorySlugs, setTaxoCategorySlugs] = React.useState<string[]>([]);
+  const [taxoGenreSlugs, setTaxoGenreSlugs] = React.useState<string[]>([]);
   const [taxoTags, setTaxoTags] = React.useState("");
   const [changeStatus, setChangeStatus] = React.useState("DRAFT");
   const [savingMeta, setSavingMeta] = React.useState(false);
@@ -143,12 +146,19 @@ export default function AdminContentDetailPage() {
     return () => window.clearInterval(id);
   }, [polling, pollMs, fetchDetail]);
 
-  // Load categories when edit tab is first opened
+  // Load categories and genres when edit tab is first opened
   React.useEffect(() => {
-    if (tab === "edit" && categories.length === 0) {
-      apiGet<AdminCategoryResult[]>("/api/admin/categories")
-        .then(setCategories)
-        .catch(() => {});
+    if (tab === "edit") {
+      if (categories.length === 0) {
+        apiGet<AdminCategoryResult[]>("/api/admin/categories")
+          .then(setCategories)
+          .catch(() => {});
+      }
+      if (genres.length === 0) {
+        apiGet<AdminGenreResult[]>("/api/admin/genres")
+          .then(setGenres)
+          .catch(() => {});
+      }
     }
   }, [tab]);
 
@@ -246,6 +256,7 @@ export default function AdminContentDetailPage() {
     try {
       const cmd: AdminUpdateTaxonomyCommand = {
         categorySlugs: taxoCategorySlugs,
+        genreSlugs: taxoGenreSlugs,
         tags: taxoTags.split(",").map((t) => t.trim()).filter(Boolean),
       };
       await apiPut(`/api/admin/contents/${contentId}/taxonomy`, cmd);
@@ -276,6 +287,12 @@ export default function AdminContentDetailPage() {
 
   function toggleCategorySlug(slug: string) {
     setTaxoCategorySlugs((prev) =>
+      prev.includes(slug) ? prev.filter((s) => s !== slug) : [...prev, slug]
+    );
+  }
+
+  function toggleGenreSlug(slug: string) {
+    setTaxoGenreSlugs((prev) =>
       prev.includes(slug) ? prev.filter((s) => s !== slug) : [...prev, slug]
     );
   }
@@ -695,7 +712,7 @@ export default function AdminContentDetailPage() {
           <Card>
             <CardHeader>
               <div className="text-sm font-semibold">Taxonomy</div>
-              <div className="text-xs text-[rgb(var(--fg-secondary))]">Assign categories and tags for catalog browsing.</div>
+              <div className="text-xs text-[rgb(var(--fg-secondary))]">Assign categories, genres, and tags for catalog browsing.</div>
             </CardHeader>
             <CardContent>
               <form onSubmit={onSaveTaxonomy} className="space-y-4">
@@ -726,12 +743,39 @@ export default function AdminContentDetailPage() {
                   )}
                 </div>
 
+                <div className="space-y-2">
+                  <label className="text-xs font-semibold text-[rgb(var(--fg-secondary))]">Genres</label>
+                  {genres.length === 0 ? (
+                    <div className="text-xs text-[rgb(var(--fg-secondary))]">No genres found. Create some in the Genres page first.</div>
+                  ) : (
+                    <div className="flex flex-wrap gap-2">
+                      {genres.map((g) => (
+                        <button
+                          key={g.slug}
+                          type="button"
+                          onClick={() => toggleGenreSlug(g.slug)}
+                          className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition ${
+                            taxoGenreSlugs.includes(g.slug)
+                              ? "border-emerald-400 bg-emerald-500/20 text-emerald-300"
+                              : "border-[rgb(var(--border))] bg-[rgb(var(--card))] text-[rgb(var(--fg-secondary))] hover:bg-[rgb(var(--muted))]"
+                          }`}
+                        >
+                          {g.label}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  {taxoGenreSlugs.length > 0 && (
+                    <div className="text-xs text-[rgb(var(--fg-secondary))]">Selected: {taxoGenreSlugs.join(", ")}</div>
+                  )}
+                </div>
+
                 <div className="space-y-1">
                   <label className="text-xs font-semibold text-[rgb(var(--fg-secondary))]">Tags (comma-separated)</label>
                   <Input
                     value={taxoTags}
                     onChange={(e) => setTaxoTags(e.target.value)}
-                    placeholder="e.g. action, drama, thriller"
+                    placeholder="e.g. blockbuster, trending"
                   />
                 </div>
 

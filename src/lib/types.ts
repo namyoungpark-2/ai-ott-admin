@@ -72,6 +72,17 @@ export interface AdminCategoryResult {
   description: string | null;
   sortOrder: number;
   active: boolean;
+  iabCode: string | null;
+  tier: number | null;
+  parentId: string | null;
+  parentSlug: string | null;
+}
+
+export interface AdminGenreResult {
+  id: string;
+  slug: string;
+  label: string;
+  description: string | null;
 }
 
 export interface AdminCreateContentCommand {
@@ -98,7 +109,9 @@ export interface AdminUpdateMetadataCommand {
 
 export interface AdminUpdateTaxonomyCommand {
   categorySlugs: string[];
+  genreSlugs: string[];
   tags: string[];
+  lang?: string;
 }
 
 export interface OpsSummary {
