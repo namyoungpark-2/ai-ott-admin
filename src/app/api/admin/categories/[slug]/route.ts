@@ -13,3 +13,13 @@ export async function PUT(
     body,
   });
 }
+
+export async function DELETE(
+  _req: NextRequest,
+  { params }: { params: Promise<{ slug: string }> },
+) {
+  const { slug } = await params;
+  return authedBackendFetch(`/api/admin/categories/${encodeURIComponent(slug)}`, {
+    method: "DELETE",
+  });
+}

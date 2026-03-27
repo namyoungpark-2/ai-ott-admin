@@ -5,7 +5,7 @@ import { ColumnDef } from "@tanstack/react-table";
 import { Badge, Button, Card, CardContent, CardHeader, Input } from "@/components/ui";
 import { DataTable } from "@/components/table/DataTable";
 import { useToast } from "@/components/toast";
-import { apiGet, apiPost, apiPut } from "@/lib/http";
+import { apiGet, apiPost, apiPut, apiDelete } from "@/lib/http";
 import type { AdminCategoryResult } from "@/lib/types";
 
 export default function CategoriesPage() {
@@ -219,10 +219,41 @@ export default function CategoriesPage() {
     },
   ], []);
 
+  async function onDelete(row: AdminCategoryResult) {
+    if (!confirm(`Delete category "${row.label}" (${row.slug})?`)) return;
+    try {
+      await apiDelete(`/api/admin/categories/${encodeURIComponent(row.slug)}`);
+      toast({ type: "success", title: "Category deleted" });
+      refresh();
+    } catch (e: any) {
+      toast({ type: "error", title: "Failed to delete", description: e?.message });
+    }
+  }
+
+  async function bulkDelete(selectedRows: AdminCategoryResult[]) {
+    if (!confirm(`Delete ${selectedRows.length} categories?`)) return;
+    try {
+      await Promise.all(
+        selectedRows.map((row) =>
+          apiDelete(`/api/admin/categories/${encodeURIComponent(row.slug)}`)
+        )
+      );
+      toast({ type: "success", title: `Deleted ${selectedRows.length} categories` });
+      refresh();
+    } catch (e: any) {
+      toast({ type: "error", title: "Failed to delete", description: e?.message });
+    }
+  }
+
   const rowActions = React.useMemo(() => [
     {
       label: "Edit",
       onClick: (row: AdminCategoryResult) => openEdit(row),
+    },
+    {
+      label: "Delete",
+      onClick: (row: AdminCategoryResult) => onDelete(row),
+      tone: "danger" as const,
     },
   ], []);
 
@@ -477,6 +508,10 @@ export default function CategoriesPage() {
           {
             label: "Deactivate",
             onClick: (selected) => bulkSetActive(selected, false),
+          },
+          {
+            label: "Delete",
+            onClick: (selected) => bulkDelete(selected),
             tone: "danger",
           },
         ]}
