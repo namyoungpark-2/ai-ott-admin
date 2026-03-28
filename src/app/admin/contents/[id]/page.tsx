@@ -139,7 +139,7 @@ export default function AdminContentDetailPage() {
     } finally {
       if (!silent) setLoading(false);
     }
-  }, [contentId]);
+  }, [contentId, globalLang]);
 
   React.useEffect(() => { fetchDetail(); }, [fetchDetail]);
 

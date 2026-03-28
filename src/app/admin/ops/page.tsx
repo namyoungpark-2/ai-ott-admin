@@ -7,6 +7,7 @@ import { DataTable } from "@/components/table/DataTable";
 import { ExpandableText } from "@/components/table/ExpandableText";
 import { StatCard } from "@/components/metrics/StatCard";
 import { apiGet } from "@/lib/http";
+import { useLanguage } from "@/components/language/LanguageProvider";
 import type { OpsSummary, OpsFailureTop, OpsRecentRow } from "@/lib/types";
 
 function statusTone(s?: string) {
@@ -18,6 +19,7 @@ function statusTone(s?: string) {
 }
 
 export default function OpsPage() {
+  const { lang } = useLanguage();
   const [summary, setSummary] = React.useState<OpsSummary | null>(null);
   const [topFailures, setTopFailures] = React.useState<OpsFailureTop[]>([]);
   const [recent, setRecent] = React.useState<OpsRecentRow[]>([]);
@@ -45,7 +47,7 @@ export default function OpsPage() {
     }
   }
 
-  React.useEffect(() => { refresh(); }, []);
+  React.useEffect(() => { refresh(); }, [lang]);
 
   React.useEffect(() => {
     if (!polling) return;

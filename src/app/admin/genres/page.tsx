@@ -33,7 +33,7 @@ export default function GenresPage() {
     }
   }
 
-  React.useEffect(() => { refresh(); }, []);
+  React.useEffect(() => { refresh(); }, [lang]);
 
   async function onCreate(e: React.FormEvent) {
     e.preventDefault();

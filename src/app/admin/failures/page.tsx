@@ -11,6 +11,7 @@ import { ExpandableText } from "@/components/table/ExpandableText";
 import { Badge, Button, Input } from "@/components/ui";
 import { apiGet, apiPost } from "@/lib/http";
 import { useToast } from "@/components/toast";
+import { useLanguage } from "@/components/language/LanguageProvider";
 
 /** ✅ 너희 응답에 맞춰 필드명만 조정 */
 type FailureRow = {
@@ -49,6 +50,7 @@ function classify(r: FailureRow) {
 
 export default function AdminFailuresPage() {
   const { toast } = useToast();
+  const { lang } = useLanguage();
 
   const [loading, setLoading] = React.useState(true);
   const [rows, setRows] = React.useState<FailureRow[]>([]);
@@ -93,7 +95,7 @@ export default function AdminFailuresPage() {
 
   React.useEffect(() => {
     refresh();
-  }, []);
+  }, [lang]);
 
   // ✅ 자동 폴링
   React.useEffect(() => {

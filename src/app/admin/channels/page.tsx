@@ -6,10 +6,12 @@ import { Badge, Button, Card, CardContent } from "@/components/ui";
 import { DataTable } from "@/components/table/DataTable";
 import { useToast } from "@/components/toast";
 import { apiGet, apiPatch } from "@/lib/http";
+import { useLanguage } from "@/components/language/LanguageProvider";
 import type { AdminChannelResult } from "@/lib/types";
 
 export default function ChannelsPage() {
   const { toast } = useToast();
+  const { lang } = useLanguage();
   const [rows, setRows] = React.useState<AdminChannelResult[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [toggling, setToggling] = React.useState<string | null>(null);
@@ -30,7 +32,7 @@ export default function ChannelsPage() {
     }
   }
 
-  React.useEffect(() => { refresh(); }, []);
+  React.useEffect(() => { refresh(); }, [lang]);
 
   async function handleToggleStatus(channel: AdminChannelResult) {
     const newStatus = channel.status === "ACTIVE" ? "SUSPENDED" : "ACTIVE";

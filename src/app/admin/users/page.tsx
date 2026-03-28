@@ -4,6 +4,7 @@ import * as React from "react";
 import { apiDelete, apiGet, apiPut } from "@/lib/http";
 import { Badge, Button } from "@/components/ui";
 import { useToast } from "@/components/toast";
+import { useLanguage } from "@/components/language/LanguageProvider";
 
 type UserRow = {
   id: string;
@@ -36,6 +37,7 @@ function formatDate(iso?: string | null) {
 
 export default function AdminUsersPage() {
   const { toast } = useToast();
+  const { lang } = useLanguage();
   const [rows, setRows] = React.useState<UserRow[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [err, setErr] = React.useState<string | null>(null);
@@ -64,7 +66,7 @@ export default function AdminUsersPage() {
   React.useEffect(() => {
     refresh();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tierFilter]);
+  }, [tierFilter, lang]);
 
   async function handleChangeTier(userId: string) {
     const newTier = pendingTier[userId];

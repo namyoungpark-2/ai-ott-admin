@@ -8,6 +8,7 @@ import { Badge, Button } from "@/components/ui";
 import { DataTable } from "@/components/table/DataTable";
 import { actionsColumn, selectColumn } from "@/components/table/columns";
 import { useToast } from "@/components/toast";
+import { useLanguage } from "@/components/language/LanguageProvider";
 
 type ContentRow = {
   contentId: string;
@@ -31,6 +32,7 @@ function statusTone(s?: string) {
 
 export default function AdminContentsPage() {
   const { toast } = useToast();
+  const { lang } = useLanguage();
   const [loading, setLoading] = React.useState(true);
   const [rows, setRows] = React.useState<ContentRow[]>([]);
   const [err, setErr] = React.useState<string | null>(null);
@@ -51,7 +53,7 @@ export default function AdminContentsPage() {
 
   React.useEffect(() => {
     refresh();
-  }, []);
+  }, [lang]);
 
   const columns = React.useMemo<ColumnDef<ContentRow>[]>(() => {
     return [
