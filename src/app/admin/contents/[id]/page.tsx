@@ -9,7 +9,7 @@ import { Tabs } from "@/components/tabs/Tab";
 import { useToast } from "@/components/toast";
 import { Badge, Button, Card, CardContent, CardHeader, Input } from "@/components/ui";
 import { apiGet, apiPost, apiPut, apiPatch } from "@/lib/http";
-import { useLanguage } from "@/components/language/LanguageProvider";
+import { useTranslation } from "@/lib/i18n";
 import Link from "next/link";
 import type {
   AdminContentDetailDto,
@@ -92,7 +92,7 @@ export default function AdminContentDetailPage() {
   const { toast } = useToast();
   const params = useParams<{ id: string }>();
   const contentId = params?.id;
-  const { lang: globalLang } = useLanguage();
+  const { t, lang: globalLang } = useTranslation();
 
   const [tab, setTab] = React.useState<"overview" | "preview" | "edit">("overview");
   const [loading, setLoading] = React.useState(true);
@@ -135,7 +135,7 @@ export default function AdminContentDetailPage() {
       setLastUpdatedAt(Date.now());
       setErr(null);
     } catch (e: any) {
-      setErr(e?.message ?? "Failed to load detail");
+      setErr(e?.message ?? t("detail.failedToLoad"));
     } finally {
       if (!silent) setLoading(false);
     }
@@ -178,10 +178,10 @@ export default function AdminContentDetailPage() {
     if (!contentId) return;
     try {
       await apiPost(`/api/admin/contents/${contentId}/transcode`, {});
-      toast({ type: "success", title: "Transcode started", description: contentId });
+      toast({ type: "success", title: t("contents.transcodeStarted"), description: contentId });
       fetchDetail({ silent: true });
     } catch (e: any) {
-      toast({ type: "error", title: "Transcode failed", description: e?.message ?? "Unknown" });
+      toast({ type: "error", title: t("contents.transcodeFailed"), description: e?.message ?? "Unknown" });
     }
   }
 
@@ -189,17 +189,17 @@ export default function AdminContentDetailPage() {
     if (!detail?.videoAssetId) return;
     try {
       await apiPost(`/api/admin/video-assets/${detail.videoAssetId}/retry`, {});
-      toast({ type: "success", title: "Retry requested", description: detail.videoAssetId });
+      toast({ type: "success", title: t("common.retry"), description: detail.videoAssetId });
       fetchDetail({ silent: true });
     } catch (e: any) {
-      toast({ type: "error", title: "Retry failed", description: e?.message ?? "Unknown" });
+      toast({ type: "error", title: t("common.retry"), description: e?.message ?? "Unknown" });
     }
   }
 
   async function onUploadAsset() {
     if (!contentId || !uploadFile) return;
     setUploading(true);
-    setUploadProgress("Uploading…");
+    setUploadProgress(t("common.uploading"));
     try {
       const fd = new FormData();
       fd.append("file", uploadFile);
@@ -212,12 +212,12 @@ export default function AdminContentDetailPage() {
         const text = await r.text();
         throw new Error(text || `${r.status} ${r.statusText}`);
       }
-      toast({ type: "success", title: "Video asset uploaded", description: "Transcoding will start automatically." });
+      toast({ type: "success", title: t("detail.uploadSuccess") });
       setUploadFile(null);
       setUploadProgress(null);
       fetchDetail({ silent: true });
     } catch (e: any) {
-      toast({ type: "error", title: "Upload failed", description: e?.message ?? "Unknown" });
+      toast({ type: "error", title: t("detail.uploadFailed"), description: e?.message ?? "Unknown" });
       setUploadProgress(null);
     } finally {
       setUploading(false);
@@ -242,11 +242,11 @@ export default function AdminContentDetailPage() {
         status: metaStatus || undefined,
       };
       await apiPut(`/api/admin/contents/${contentId}/metadata`, cmd);
-      toast({ type: "success", title: "Metadata saved", description: "Changes applied successfully." });
+      toast({ type: "success", title: t("detail.metadataSaved") });
       await fetchDetail({ silent: true });
       setTab("overview");
     } catch (e: any) {
-      toast({ type: "error", title: "Failed to save metadata", description: e?.message });
+      toast({ type: "error", title: t("detail.metadataFailed"), description: e?.message });
     } finally {
       setSavingMeta(false);
     }
@@ -260,14 +260,14 @@ export default function AdminContentDetailPage() {
       const cmd: AdminUpdateTaxonomyCommand = {
         categorySlugs: taxoCategorySlugs,
         genreSlugs: taxoGenreSlugs,
-        tags: taxoTags.split(",").map((t) => t.trim()).filter(Boolean),
+        tags: taxoTags.split(",").map((s) => s.trim()).filter(Boolean),
       };
       await apiPut(`/api/admin/contents/${contentId}/taxonomy`, cmd);
-      toast({ type: "success", title: "Taxonomy saved", description: "Changes applied successfully." });
+      toast({ type: "success", title: t("detail.taxonomySaved") });
       await fetchDetail({ silent: true });
       setTab("overview");
     } catch (e: any) {
-      toast({ type: "error", title: "Failed to save taxonomy", description: e?.message });
+      toast({ type: "error", title: t("detail.taxonomyFailed"), description: e?.message });
     } finally {
       setSavingTaxo(false);
     }
@@ -278,11 +278,11 @@ export default function AdminContentDetailPage() {
     setSavingStatus(true);
     try {
       await apiPatch(`/api/admin/contents/${contentId}/status`, { status: changeStatus });
-      toast({ type: "success", title: `Status changed to ${changeStatus}`, description: "Status updated successfully." });
+      toast({ type: "success", title: t("detail.statusChanged"), description: changeStatus });
       await fetchDetail({ silent: true });
       setTab("overview");
     } catch (e: any) {
-      toast({ type: "error", title: "Failed to change status", description: e?.message });
+      toast({ type: "error", title: t("detail.statusFailed"), description: e?.message });
     } finally {
       setSavingStatus(false);
     }
@@ -300,17 +300,17 @@ export default function AdminContentDetailPage() {
     );
   }
 
-  if (loading) return <div className="text-sm text-[rgb(var(--fg-secondary))]">Loading…</div>;
+  if (loading) return <div className="text-sm text-[rgb(var(--fg-secondary))]">{t("common.loading")}</div>;
 
   if (err) {
     return (
       <div className="rounded-2xl border border-red-500/30 bg-red-500/10 p-6">
-        <div className="font-semibold text-red-400">Failed to load</div>
+        <div className="font-semibold text-red-400">{t("detail.failedToLoad")}</div>
         <div className="mt-1 text-sm text-red-400">{err}</div>
         <div className="mt-4 flex items-center gap-2">
-          <Button tone="secondary" onClick={() => fetchDetail()}>Retry</Button>
+          <Button tone="secondary" onClick={() => fetchDetail()}>{t("common.retry")}</Button>
           <Button tone="secondary" onClick={() => setPolling((v) => !v)}>
-            Polling: {polling ? "ON" : "OFF"}
+            {t("detail.polling")}: {polling ? t("detail.on") : t("detail.off")}
           </Button>
         </div>
       </div>
@@ -323,9 +323,9 @@ export default function AdminContentDetailPage() {
   const canPreview = detail.videoAssetStatus === "READY" && !!detail.streamUrl;
 
   const tabs = [
-    { key: "overview", label: "Overview" },
-    { key: "preview", label: "Preview", badge: canPreview ? undefined : "N/A" },
-    { key: "edit", label: "Edit" },
+    { key: "overview", label: t("detail.overview") },
+    { key: "preview", label: t("detail.preview"), badge: canPreview ? undefined : "N/A" },
+    { key: "edit", label: t("detail.editTab") },
   ] as const;
 
   return (
@@ -350,13 +350,13 @@ export default function AdminContentDetailPage() {
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
-              <Button tone="primary" className="h-10" onClick={onTranscode}>Transcode</Button>
+              <Button tone="primary" className="h-10" onClick={onTranscode}>{t("contents.transcode")}</Button>
               {detail.videoAssetId && (
-                <Button tone="danger" className="h-10" onClick={onRetry}>Retry</Button>
+                <Button tone="danger" className="h-10" onClick={onRetry}>{t("common.retry")}</Button>
               )}
-              <Button tone="secondary" className="h-10" onClick={() => fetchDetail()}>Refresh</Button>
+              <Button tone="secondary" className="h-10" onClick={() => fetchDetail()}>{t("common.refresh")}</Button>
               <Button tone="secondary" className="h-10" onClick={() => setPolling((v) => !v)}>
-                Polling: {polling ? "ON" : "OFF"}
+                {t("detail.polling")}: {polling ? t("detail.on") : t("detail.off")}
               </Button>
               <select
                 className="h-10 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] px-2 text-sm"
@@ -373,7 +373,7 @@ export default function AdminContentDetailPage() {
           {/* Status summary cards */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
             <div className="rounded-2xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] p-4 shadow-sm">
-              <div className="text-xs font-semibold text-[rgb(var(--fg-secondary))]">Video Asset</div>
+              <div className="text-xs font-semibold text-[rgb(var(--fg-secondary))]">{t("detail.videoAssetStatus")}</div>
               <div className="mt-1">
                 {detail.videoAssetStatus ? (
                   <Badge tone={statusTone(detail.videoAssetStatus) as any}>{detail.videoAssetStatus}</Badge>
@@ -383,7 +383,7 @@ export default function AdminContentDetailPage() {
               </div>
             </div>
             <div className="rounded-2xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] p-4 shadow-sm">
-              <div className="text-xs font-semibold text-[rgb(var(--fg-secondary))]">Latest Job</div>
+              <div className="text-xs font-semibold text-[rgb(var(--fg-secondary))]">{t("detail.latestJobStatus")}</div>
               <div className="mt-1">
                 {detail.latestJobStatus ? (
                   <Badge tone={statusTone(detail.latestJobStatus) as any}>{detail.latestJobStatus}</Badge>
@@ -393,13 +393,13 @@ export default function AdminContentDetailPage() {
               </div>
             </div>
             <div className="rounded-2xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] p-4 shadow-sm">
-              <div className="text-xs font-semibold text-[rgb(var(--fg-secondary))]">Attempts</div>
+              <div className="text-xs font-semibold text-[rgb(var(--fg-secondary))]">{t("detail.attemptCount")}</div>
               <div className="mt-1 text-2xl font-extrabold">{detail.attemptCount}</div>
             </div>
             <div className={`rounded-2xl border p-4 shadow-sm ${canPreview ? "border-green-500/30 bg-green-500/10" : "border-amber-500/30 bg-amber-500/10"}`}>
-              <div className={`text-xs font-semibold ${canPreview ? "text-green-400" : "text-amber-400"}`}>Playback</div>
+              <div className={`text-xs font-semibold ${canPreview ? "text-green-400" : "text-amber-400"}`}>{t("detail.videoPlayer")}</div>
               <div className={`mt-1 text-sm font-semibold ${canPreview ? "text-green-400" : "text-amber-400"}`}>
-                {canPreview ? "Ready" : "Not available"}
+                {canPreview ? t("detail.on") : t("detail.videoNotAvailable")}
               </div>
             </div>
           </div>
@@ -416,27 +416,27 @@ export default function AdminContentDetailPage() {
           <KeyValue
             cols={3}
             items={[
-              { k: "Content ID", v: <span className="font-mono text-xs break-all">{detail.contentId}</span> },
-              { k: "Title", v: String(detail.title ?? "-") },
-              { k: "Channel", v: detail.channelName ? (
+              { k: t("contents.contentId"), v: <span className="font-mono text-xs break-all">{detail.contentId}</span> },
+              { k: t("field.title"), v: String(detail.title ?? "-") },
+              { k: t("field.channel"), v: detail.channelName ? (
                 <Link href="/admin/channels" className="text-violet-400 hover:underline">
                   {detail.channelName} <span className="text-[rgb(var(--fg-secondary))]">@{detail.channelHandle}</span>
                 </Link>
               ) : "-" },
-              { k: "Content Status", v: <Badge tone={statusTone(detail.contentStatus) as any}>{String(detail.contentStatus ?? "-")}</Badge> },
-              { k: "UI Status", v: <Badge tone={statusTone(uiStatus) as any}>{uiStatus}</Badge> },
-              { k: "Video Asset ID", v: detail.videoAssetId ? <span className="font-mono text-xs break-all">{detail.videoAssetId}</span> : "-" },
-              { k: "Video Asset Status", v: detail.videoAssetStatus ? <Badge tone={statusTone(detail.videoAssetStatus) as any}>{detail.videoAssetStatus}</Badge> : "-" },
-              { k: "Source Key", v: detail.sourceKey ? <span className="font-mono text-xs break-all">{detail.sourceKey}</span> : "-" },
-              { k: "HLS Master Key", v: detail.hlsMasterKey ? <span className="font-mono text-xs break-all">{detail.hlsMasterKey}</span> : "-" },
-              { k: "Stream URL", v: detail.streamUrl ? <span className="font-mono text-xs break-all">{detail.streamUrl}</span> : "-" },
-              { k: "Thumbnail URL", v: detail.thumbnailUrl ? <span className="font-mono text-xs break-all">{detail.thumbnailUrl}</span> : "-" },
-              { k: "Attempt Count", v: <span className="font-mono">{detail.attemptCount}</span> },
-              { k: "Latest Job Status", v: detail.latestJobStatus ? <Badge tone={statusTone(detail.latestJobStatus) as any}>{detail.latestJobStatus}</Badge> : "-" },
-              { k: "Latest Error", v: detail.latestErrorMessage ? <span className="text-red-400 text-xs">{detail.latestErrorMessage}</span> : "-" },
-              { k: "Asset Error", v: detail.videoAssetErrorMessage ? <span className="text-red-400 text-xs">{detail.videoAssetErrorMessage}</span> : "-" },
-              { k: "Created At", v: formatDate(detail.createdAt) },
-              { k: "Updated At", v: formatDate(detail.updatedAt) },
+              { k: t("detail.contentStatus"), v: <Badge tone={statusTone(detail.contentStatus) as any}>{String(detail.contentStatus ?? "-")}</Badge> },
+              { k: t("contents.uiStatus"), v: <Badge tone={statusTone(uiStatus) as any}>{uiStatus}</Badge> },
+              { k: t("detail.videoAssetId"), v: detail.videoAssetId ? <span className="font-mono text-xs break-all">{detail.videoAssetId}</span> : "-" },
+              { k: t("detail.videoAssetStatus"), v: detail.videoAssetStatus ? <Badge tone={statusTone(detail.videoAssetStatus) as any}>{detail.videoAssetStatus}</Badge> : "-" },
+              { k: t("detail.sourceKey"), v: detail.sourceKey ? <span className="font-mono text-xs break-all">{detail.sourceKey}</span> : "-" },
+              { k: t("detail.hlsMasterKey"), v: detail.hlsMasterKey ? <span className="font-mono text-xs break-all">{detail.hlsMasterKey}</span> : "-" },
+              { k: t("detail.streamUrl"), v: detail.streamUrl ? <span className="font-mono text-xs break-all">{detail.streamUrl}</span> : "-" },
+              { k: t("detail.thumbnailUrl"), v: detail.thumbnailUrl ? <span className="font-mono text-xs break-all">{detail.thumbnailUrl}</span> : "-" },
+              { k: t("detail.attemptCount"), v: <span className="font-mono">{detail.attemptCount}</span> },
+              { k: t("detail.latestJobStatus"), v: detail.latestJobStatus ? <Badge tone={statusTone(detail.latestJobStatus) as any}>{detail.latestJobStatus}</Badge> : "-" },
+              { k: t("detail.latestError"), v: detail.latestErrorMessage ? <span className="text-red-400 text-xs">{detail.latestErrorMessage}</span> : "-" },
+              { k: t("detail.assetError"), v: detail.videoAssetErrorMessage ? <span className="text-red-400 text-xs">{detail.videoAssetErrorMessage}</span> : "-" },
+              { k: t("field.createdAt"), v: formatDate(detail.createdAt) },
+              { k: t("field.updatedAt"), v: formatDate(detail.updatedAt) },
             ]}
           />
 
@@ -444,12 +444,12 @@ export default function AdminContentDetailPage() {
           {detail.thumbnailUrl && (
             <Card>
               <CardHeader>
-                <div className="text-sm font-semibold">Thumbnail</div>
+                <div className="text-sm font-semibold">{t("detail.thumbnail")}</div>
               </CardHeader>
               <CardContent>
                 <img
                   src={detail.thumbnailUrl}
-                  alt="Thumbnail"
+                  alt={t("detail.thumbnail")}
                   className="rounded-xl max-h-48 object-contain bg-black"
                 />
               </CardContent>
@@ -460,9 +460,9 @@ export default function AdminContentDetailPage() {
           {!detail.videoAssetId && (
             <Card>
               <CardHeader>
-                <div className="text-sm font-semibold">Upload Video Asset</div>
+                <div className="text-sm font-semibold">{t("detail.uploadVideoAsset")}</div>
                 <div className="text-xs text-[rgb(var(--fg-secondary))]">
-                  No video asset linked. Upload a video file to create an asset and start transcoding automatically.
+                  {t("detail.noVideoAsset")}
                 </div>
               </CardHeader>
               <CardContent>
@@ -487,7 +487,7 @@ export default function AdminContentDetailPage() {
                     onClick={onUploadAsset}
                     disabled={!uploadFile || uploading}
                   >
-                    {uploading ? "Uploading…" : "Upload & Transcode"}
+                    {uploading ? t("common.uploading") : t("detail.uploadAndTranscode")}
                   </Button>
                 </div>
               </CardContent>
@@ -527,7 +527,7 @@ export default function AdminContentDetailPage() {
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <div>
-                    <div className="text-sm font-semibold">Video Player</div>
+                    <div className="text-sm font-semibold">{t("detail.videoPlayer")}</div>
                     <div className="text-xs text-[rgb(var(--fg-secondary))] mt-1 font-mono break-all">{detail.streamUrl}</div>
                   </div>
                   <Badge tone="success">READY</Badge>
@@ -542,7 +542,7 @@ export default function AdminContentDetailPage() {
               <CardContent>
                 <div className="flex flex-col items-center justify-center py-12 text-center">
                   <div className="text-4xl mb-4">🎬</div>
-                  <div className="text-lg font-semibold text-[rgb(var(--fg))]">Video not available</div>
+                  <div className="text-lg font-semibold text-[rgb(var(--fg))]">{t("detail.videoNotAvailable")}</div>
                   <div className="mt-2 text-sm text-[rgb(var(--fg-secondary))] max-w-md">
                     {!detail.videoAssetId
                       ? "No video asset linked to this content. Upload a video first."
@@ -572,7 +572,7 @@ export default function AdminContentDetailPage() {
           {/* Status change */}
           <Card>
             <CardHeader>
-              <div className="text-sm font-semibold">Change Status</div>
+              <div className="text-sm font-semibold">{t("detail.changeStatus")}</div>
               <div className="text-xs text-[rgb(var(--fg-secondary))]">Current: <Badge tone={statusTone(detail.contentStatus) as any}>{String(detail.contentStatus ?? "-")}</Badge></div>
             </CardHeader>
             <CardContent>
@@ -587,7 +587,7 @@ export default function AdminContentDetailPage() {
                   ))}
                 </select>
                 <Button tone="primary" onClick={onChangeStatus} disabled={savingStatus}>
-                  {savingStatus ? "Saving…" : "Apply Status"}
+                  {savingStatus ? t("common.saving") : t("detail.applyStatus")}
                 </Button>
               </div>
             </CardContent>
@@ -596,14 +596,14 @@ export default function AdminContentDetailPage() {
           {/* Metadata form */}
           <Card>
             <CardHeader>
-              <div className="text-sm font-semibold">Metadata</div>
-              <div className="text-xs text-[rgb(var(--fg-secondary))]">Update title, description, and other i18n fields.</div>
+              <div className="text-sm font-semibold">{t("detail.editMetadata")}</div>
+              <div className="text-xs text-[rgb(var(--fg-secondary))]">{t("detail.editMetadata")}</div>
             </CardHeader>
             <CardContent>
               <form onSubmit={onSaveMetadata} className="space-y-3">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div className="space-y-1">
-                    <label className="text-xs font-semibold text-[rgb(var(--fg-secondary))]">Language</label>
+                    <label className="text-xs font-semibold text-[rgb(var(--fg-secondary))]">{t("detail.language")}</label>
                     <select
                       className="h-10 w-full rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] px-3 text-sm"
                       value={metaLang}
@@ -616,7 +616,7 @@ export default function AdminContentDetailPage() {
                     </select>
                   </div>
                   <div className="space-y-1">
-                    <label className="text-xs font-semibold text-[rgb(var(--fg-secondary))]">Title *</label>
+                    <label className="text-xs font-semibold text-[rgb(var(--fg-secondary))]">{t("field.title")} *</label>
                     <Input
                       value={metaTitle}
                       onChange={(e) => setMetaTitle(e.target.value)}
@@ -627,7 +627,7 @@ export default function AdminContentDetailPage() {
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold text-[rgb(var(--fg-secondary))]">Description</label>
+                  <label className="text-xs font-semibold text-[rgb(var(--fg-secondary))]">{t("field.description")}</label>
                   <textarea
                     className="w-full rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[rgb(var(--brand))] focus:border-[rgb(var(--brand))] min-h-[80px]"
                     value={metaDesc}
@@ -638,7 +638,7 @@ export default function AdminContentDetailPage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                   <div className="space-y-1">
-                    <label className="text-xs font-semibold text-[rgb(var(--fg-secondary))]">Runtime (seconds)</label>
+                    <label className="text-xs font-semibold text-[rgb(var(--fg-secondary))]">{t("detail.runtime")}</label>
                     <Input
                       type="number"
                       value={metaRuntime}
@@ -647,7 +647,7 @@ export default function AdminContentDetailPage() {
                     />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-xs font-semibold text-[rgb(var(--fg-secondary))]">Release Date</label>
+                    <label className="text-xs font-semibold text-[rgb(var(--fg-secondary))]">{t("detail.releaseDate")}</label>
                     <Input
                       type="datetime-local"
                       value={metaReleaseAt}
@@ -655,7 +655,7 @@ export default function AdminContentDetailPage() {
                     />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-xs font-semibold text-[rgb(var(--fg-secondary))]">Age Rating</label>
+                    <label className="text-xs font-semibold text-[rgb(var(--fg-secondary))]">{t("detail.ageRating")}</label>
                     <Input
                       value={metaAgeRating}
                       onChange={(e) => setMetaAgeRating(e.target.value)}
@@ -666,7 +666,7 @@ export default function AdminContentDetailPage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div className="space-y-1">
-                    <label className="text-xs font-semibold text-[rgb(var(--fg-secondary))]">Poster URL</label>
+                    <label className="text-xs font-semibold text-[rgb(var(--fg-secondary))]">{t("detail.posterUrl")}</label>
                     <Input
                       value={metaPosterUrl}
                       onChange={(e) => setMetaPosterUrl(e.target.value)}
@@ -674,7 +674,7 @@ export default function AdminContentDetailPage() {
                     />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-xs font-semibold text-[rgb(var(--fg-secondary))]">Banner URL</label>
+                    <label className="text-xs font-semibold text-[rgb(var(--fg-secondary))]">{t("detail.bannerUrl")}</label>
                     <Input
                       value={metaBannerUrl}
                       onChange={(e) => setMetaBannerUrl(e.target.value)}
@@ -685,7 +685,7 @@ export default function AdminContentDetailPage() {
 
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1">
-                    <label className="text-xs font-semibold text-[rgb(var(--fg-secondary))]">Content Status</label>
+                    <label className="text-xs font-semibold text-[rgb(var(--fg-secondary))]">{t("detail.contentStatus")}</label>
                     <select
                       className="h-10 w-full rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] px-3 text-sm"
                       value={metaStatus}
@@ -704,13 +704,13 @@ export default function AdminContentDetailPage() {
                         onChange={(e) => setMetaFeatured(e.target.checked)}
                         className="h-4 w-4 rounded"
                       />
-                      Featured
+                      {t("detail.featured")}
                     </label>
                   </div>
                 </div>
 
                 <Button type="submit" tone="primary" disabled={savingMeta || !metaTitle.trim()}>
-                  {savingMeta ? "Saving…" : "Save Metadata"}
+                  {savingMeta ? t("common.saving") : t("detail.saveMetadata")}
                 </Button>
               </form>
             </CardContent>
@@ -719,13 +719,13 @@ export default function AdminContentDetailPage() {
           {/* Taxonomy form */}
           <Card>
             <CardHeader>
-              <div className="text-sm font-semibold">Taxonomy</div>
-              <div className="text-xs text-[rgb(var(--fg-secondary))]">Assign categories, genres, and tags for catalog browsing.</div>
+              <div className="text-sm font-semibold">{t("detail.editTaxonomy")}</div>
+              <div className="text-xs text-[rgb(var(--fg-secondary))]">{t("detail.editTaxonomy")}</div>
             </CardHeader>
             <CardContent>
               <form onSubmit={onSaveTaxonomy} className="space-y-4">
                 <div className="space-y-2">
-                  <label className="text-xs font-semibold text-[rgb(var(--fg-secondary))]">Categories</label>
+                  <label className="text-xs font-semibold text-[rgb(var(--fg-secondary))]">{t("detail.categorySlugs")}</label>
                   {categories.length === 0 ? (
                     <div className="text-xs text-[rgb(var(--fg-secondary))]">No categories found. Create some in the Categories page first.</div>
                   ) : (
@@ -752,7 +752,7 @@ export default function AdminContentDetailPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-xs font-semibold text-[rgb(var(--fg-secondary))]">Genres</label>
+                  <label className="text-xs font-semibold text-[rgb(var(--fg-secondary))]">{t("detail.genreSlugs")}</label>
                   {genres.length === 0 ? (
                     <div className="text-xs text-[rgb(var(--fg-secondary))]">No genres found. Create some in the Genres page first.</div>
                   ) : (
@@ -779,7 +779,7 @@ export default function AdminContentDetailPage() {
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold text-[rgb(var(--fg-secondary))]">Tags (comma-separated)</label>
+                  <label className="text-xs font-semibold text-[rgb(var(--fg-secondary))]">{t("detail.tags")}</label>
                   <Input
                     value={taxoTags}
                     onChange={(e) => setTaxoTags(e.target.value)}
@@ -788,7 +788,7 @@ export default function AdminContentDetailPage() {
                 </div>
 
                 <Button type="submit" tone="primary" disabled={savingTaxo}>
-                  {savingTaxo ? "Saving…" : "Save Taxonomy"}
+                  {savingTaxo ? t("common.saving") : t("detail.saveTaxonomy")}
                 </Button>
               </form>
             </CardContent>

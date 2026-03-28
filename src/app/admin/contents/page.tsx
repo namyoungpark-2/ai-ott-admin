@@ -8,7 +8,7 @@ import { Badge, Button } from "@/components/ui";
 import { DataTable } from "@/components/table/DataTable";
 import { actionsColumn, selectColumn } from "@/components/table/columns";
 import { useToast } from "@/components/toast";
-import { useLanguage } from "@/components/language/LanguageProvider";
+import { useTranslation } from "@/lib/i18n";
 
 type ContentRow = {
   contentId: string;
@@ -32,7 +32,7 @@ function statusTone(s?: string) {
 
 export default function AdminContentsPage() {
   const { toast } = useToast();
-  const { lang } = useLanguage();
+  const { t, lang } = useTranslation();
   const [loading, setLoading] = React.useState(true);
   const [rows, setRows] = React.useState<ContentRow[]>([]);
   const [err, setErr] = React.useState<string | null>(null);
@@ -45,7 +45,7 @@ export default function AdminContentsPage() {
       const res = await apiGet<ContentRow[]>("/api/admin/contents");
       setRows(res ?? []);
     } catch (e: any) {
-      setErr(e?.message ?? "Failed to load");
+      setErr(e?.message ?? t("contents.loadFailed"));
     } finally {
       setLoading(false);
     }
@@ -60,7 +60,7 @@ export default function AdminContentsPage() {
       selectColumn<ContentRow>(),
       {
         accessorKey: "contentId",
-        header: "Content ID",
+        header: t("contents.contentId"),
         cell: ({ row, getValue }) => (
           <Link
             className="font-mono text-xs text-[rgb(var(--fg))] hover:underline"
@@ -72,12 +72,12 @@ export default function AdminContentsPage() {
       },
       {
         accessorKey: "title",
-        header: "Title",
+        header: t("field.title"),
         cell: ({ getValue }) => <div className="max-w-[520px] truncate">{String(getValue() ?? "")}</div>,
       },
       {
         accessorKey: "channelName",
-        header: "Channel",
+        header: t("field.channel"),
         cell: ({ row }) => {
           const name = row.original.channelName;
           const handle = row.original.channelHandle;
@@ -95,40 +95,40 @@ export default function AdminContentsPage() {
       },
       {
         accessorKey: "uiStatus",
-        header: "UI Status",
+        header: t("contents.uiStatus"),
         cell: ({ getValue }) => <Badge tone={statusTone(String(getValue() ?? "")) as any}>{String(getValue() ?? "-")}</Badge>,
       },
       {
         accessorKey: "latestJobStatus",
-        header: "Latest Job",
+        header: t("contents.latestJob"),
         cell: ({ getValue }) => <Badge tone={statusTone(String(getValue() ?? "")) as any}>{String(getValue() ?? "-")}</Badge>,
       },
       {
         accessorKey: "attemptCount",
-        header: "Attempts",
+        header: t("contents.attempts"),
         cell: ({ getValue }) => <span className="font-mono text-xs">{String(getValue() ?? 0)}</span>,
       },
       {
         accessorKey: "updatedAt",
-        header: "Updated",
+        header: t("contents.updated"),
         cell: ({ getValue }) => <span className="text-[rgb(var(--fg-secondary))]">{String(getValue() ?? "-")}</span>,
       },
       actionsColumn<ContentRow>(),
     ];
-  }, []);
+  }, [t]);
 
   if (loading) {
     // 제품급: 로딩도 table skeleton으로 만들 수 있지만, 일단 최소로
-    return <div className="text-sm text-[rgb(var(--fg-secondary))]">Loading…</div>;
+    return <div className="text-sm text-[rgb(var(--fg-secondary))]">{t("common.loading")}</div>;
   }
 
   if (err) {
     return (
       <div className="rounded-2xl border border-red-500/30 bg-red-500/10 p-6">
-        <div className="font-semibold text-red-400">Failed to load</div>
+        <div className="font-semibold text-red-400">{t("contents.loadFailed")}</div>
         <div className="mt-1 text-sm text-red-400">{err}</div>
         <div className="mt-4">
-          <Button tone="secondary" onClick={refresh}>Retry</Button>
+          <Button tone="secondary" onClick={refresh}>{t("common.retry")}</Button>
         </div>
       </div>
     );
@@ -138,42 +138,42 @@ export default function AdminContentsPage() {
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <div>
-          <div className="text-lg font-extrabold tracking-tight">Contents</div>
-          <div className="mt-1 text-sm text-[rgb(var(--fg-secondary))]">Upload and manage content lifecycle.</div>
+          <div className="text-lg font-extrabold tracking-tight">{t("contents.title")}</div>
+          <div className="mt-1 text-sm text-[rgb(var(--fg-secondary))]">{t("contents.desc")}</div>
         </div>
-  
+
         <div className="flex gap-2">
           <Button tone="secondary" className="h-10" onClick={() => (window.location.href = "/admin/contents/new")}>
-            New Content
+            {t("contents.newContent")}
           </Button>
           <Button tone="primary" className="h-10" onClick={() => (window.location.href = "/admin/upload")}>
-            Upload
+            {t("nav.upload")}
           </Button>
         </div>
       </div>
-  
+
       <DataTable<ContentRow>
         title={undefined}
         description={undefined}
         data={rows}
         columns={columns}
-        searchPlaceholder="Search by title or contentId…"
+        searchPlaceholder={t("contents.searchPlaceholder")}
         globalSearchText={(r) => `${r.title ?? ""} ${r.contentId ?? ""} ${r.uiStatus ?? ""} ${r.latestJobStatus ?? ""} ${r.channelName ?? ""} ${r.channelHandle ?? ""}`}
         rowActions={[
           {
-            label: "Transcode",
+            label: t("contents.transcode"),
             onClick: async (r) => {
               try {
                 await apiPost(`/api/admin/contents/${r.contentId}/transcode`, {});
-                toast({ type: "success", title: "Transcode started", description: r.contentId });
+                toast({ type: "success", title: t("contents.transcodeStarted"), description: r.contentId });
                 refresh();
               } catch (e: any) {
-                toast({ type: "error", title: "Transcode failed", description: e?.message ?? "Unknown" });
+                toast({ type: "error", title: t("contents.transcodeFailed"), description: e?.message ?? "Unknown" });
               }
             },
           },
           {
-            label: "Open detail",
+            label: t("contents.openDetail"),
             onClick: (r) => {
               window.location.href = `/admin/contents/${r.contentId}`;
             },
@@ -183,5 +183,5 @@ export default function AdminContentsPage() {
         initialDensity="compact"
       />
     </div>
-  );  
+  );
 }

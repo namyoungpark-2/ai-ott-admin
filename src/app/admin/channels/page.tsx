@@ -6,12 +6,12 @@ import { Badge, Button, Card, CardContent } from "@/components/ui";
 import { DataTable } from "@/components/table/DataTable";
 import { useToast } from "@/components/toast";
 import { apiGet, apiPatch } from "@/lib/http";
-import { useLanguage } from "@/components/language/LanguageProvider";
+import { useTranslation } from "@/lib/i18n";
 import type { AdminChannelResult } from "@/lib/types";
 
 export default function ChannelsPage() {
   const { toast } = useToast();
-  const { lang } = useLanguage();
+  const { t, lang } = useTranslation();
   const [rows, setRows] = React.useState<AdminChannelResult[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [toggling, setToggling] = React.useState<string | null>(null);
@@ -26,7 +26,7 @@ export default function ChannelsPage() {
       setRows(res ?? []);
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : String(e);
-      toast({ type: "error", title: "Failed to load channels", description: msg });
+      toast({ type: "error", title: t("channels.loadFailed"), description: msg });
     } finally {
       setLoading(false);
     }
@@ -59,7 +59,7 @@ export default function ChannelsPage() {
       refresh();
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : String(e);
-      toast({ type: "error", title: "Failed to update status", description: msg });
+      toast({ type: "error", title: t("channels.statusFailed"), description: msg });
     } finally {
       setToggling(null);
     }
@@ -74,7 +74,7 @@ export default function ChannelsPage() {
   const columns = React.useMemo<ColumnDef<AdminChannelResult>[]>(() => [
     {
       accessorKey: "handle",
-      header: "Handle",
+      header: t("channels.handle"),
       cell: ({ row }) => (
         <span className="font-mono text-xs">
           @{row.original.handle}
@@ -83,7 +83,7 @@ export default function ChannelsPage() {
     },
     {
       accessorKey: "name",
-      header: "Name",
+      header: t("field.name"),
       cell: ({ row }) => (
         <span className="flex items-center gap-2">
           {row.original.profileImageUrl && (
@@ -95,14 +95,14 @@ export default function ChannelsPage() {
           )}
           <span className="font-medium">{row.original.name}</span>
           {row.original.isOfficial && (
-            <Badge tone="brand">Official</Badge>
+            <Badge tone="brand">{t("status.official")}</Badge>
           )}
         </span>
       ),
     },
     {
       accessorKey: "subscriberCount",
-      header: "Subscribers",
+      header: t("channels.subscribers"),
       cell: ({ getValue }) => (
         <span className="font-mono text-xs">
           {Number(getValue()).toLocaleString()}
@@ -111,12 +111,12 @@ export default function ChannelsPage() {
     },
     {
       accessorKey: "status",
-      header: "Status",
+      header: t("field.status"),
       cell: ({ getValue }) =>
         getValue() === "ACTIVE" ? (
-          <Badge tone="success">Active</Badge>
+          <Badge tone="success">{t("status.active")}</Badge>
         ) : (
-          <Badge tone="danger">Suspended</Badge>
+          <Badge tone="danger">{t("status.suspended")}</Badge>
         ),
     },
     {
@@ -133,7 +133,7 @@ export default function ChannelsPage() {
             disabled={isSuspending}
             onClick={() => handleToggleStatus(ch)}
           >
-            {isSuspending ? "…" : "Suspend"}
+            {isSuspending ? "…" : t("channels.suspend")}
           </Button>
         ) : (
           <Button
@@ -141,28 +141,28 @@ export default function ChannelsPage() {
             disabled={isSuspending}
             onClick={() => handleToggleStatus(ch)}
           >
-            {isSuspending ? "…" : "Activate"}
+            {isSuspending ? "…" : t("common.activate")}
           </Button>
         );
       },
     },
-  ], [toggling]);
+  ], [toggling, t]);
 
   return (
     <div className="space-y-6">
       <div>
-        <div className="text-lg font-extrabold tracking-tight">Channels</div>
+        <div className="text-lg font-extrabold tracking-tight">{t("channels.title")}</div>
         <div className="mt-1 text-sm text-[rgb(var(--fg-secondary))]">
-          Manage creator and official channels. Suspend channels that violate policies.
+          {t("channels.desc")}
         </div>
       </div>
 
       <DataTable<AdminChannelResult>
-        title="All Channels"
-        description="Channels are user-created or official content hubs."
+        title={t("channels.allChannels")}
+        description={t("channels.tableDesc")}
         data={rows}
         columns={columns}
-        searchPlaceholder="Search by handle or name…"
+        searchPlaceholder={t("channels.searchPlaceholder")}
         globalSearchText={(r) => `${r.handle} ${r.name}`}
         initialDensity="compact"
         initialPageSize={20}
@@ -179,7 +179,7 @@ export default function ChannelsPage() {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between border-b border-[rgb(var(--border))] px-6 py-4">
-              <div className="text-sm font-semibold">Confirm Suspension</div>
+              <div className="text-sm font-semibold">{t("channels.confirmSuspension")}</div>
               <button
                 onClick={() => setConfirmTarget(null)}
                 className="h-8 w-8 rounded-lg text-[rgb(var(--fg-secondary))] hover:bg-[rgb(var(--muted))] flex items-center justify-center"
@@ -195,14 +195,14 @@ export default function ChannelsPage() {
                     <strong>@{confirmTarget.handle}</strong> ({confirmTarget.name})?
                   </p>
                   <p className="text-xs text-[rgb(var(--fg-secondary))]">
-                    Suspended channels will not be visible to users and cannot publish new content.
+                    {t("channels.suspendedNotice")}
                   </p>
                   <div className="flex gap-2 pt-2">
                     <Button tone="danger" onClick={confirmSuspend}>
-                      Suspend Channel
+                      {t("channels.suspendChannel")}
                     </Button>
                     <Button tone="secondary" onClick={() => setConfirmTarget(null)}>
-                      Cancel
+                      {t("common.cancel")}
                     </Button>
                   </div>
                 </div>

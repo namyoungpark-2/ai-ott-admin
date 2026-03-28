@@ -6,12 +6,12 @@ import { Badge, Button, Card, CardContent, CardHeader, Input } from "@/component
 import { DataTable } from "@/components/table/DataTable";
 import { useToast } from "@/components/toast";
 import { apiGet, apiPost, apiPut, apiDelete } from "@/lib/http";
-import { useLanguage } from "@/components/language/LanguageProvider";
+import { useTranslation } from "@/lib/i18n";
 import type { AdminCategoryResult } from "@/lib/types";
 
 export default function CategoriesPage() {
   const { toast } = useToast();
-  const { lang } = useLanguage();
+  const { t, lang } = useTranslation();
   const [rows, setRows] = React.useState<AdminCategoryResult[]>([]);
   const [loading, setLoading] = React.useState(true);
 
@@ -43,7 +43,7 @@ export default function CategoriesPage() {
       const res = await apiGet<AdminCategoryResult[]>("/api/admin/categories");
       setRows(res ?? []);
     } catch (e: any) {
-      toast({ type: "error", title: "Failed to load categories", description: e?.message });
+      toast({ type: "error", title: t("categories.loadFailed"), description: e?.message });
     } finally {
       setLoading(false);
     }
@@ -54,7 +54,7 @@ export default function CategoriesPage() {
   async function onCreate(e: React.FormEvent) {
     e.preventDefault();
     if (!slug.trim() || !label.trim()) {
-      toast({ type: "error", title: "Slug and label are required" });
+      toast({ type: "error", title: t("categories.slugRequired") });
       return;
     }
     setCreating(true);
@@ -70,12 +70,12 @@ export default function CategoriesPage() {
         parentSlug: parentSlug.trim() || undefined,
         lang,
       });
-      toast({ type: "success", title: "Category created" });
+      toast({ type: "success", title: t("categories.created") });
       setSlug(""); setLabel(""); setDescription(""); setSortOrder("0");
       setActive(true); setIabCode(""); setTier("1"); setParentSlug("");
       refresh();
     } catch (e: any) {
-      toast({ type: "error", title: "Failed to create", description: e?.message });
+      toast({ type: "error", title: t("categories.createFailed"), description: e?.message });
     } finally {
       setCreating(false);
     }
@@ -96,7 +96,7 @@ export default function CategoriesPage() {
     e.preventDefault();
     if (!editing) return;
     if (!editLabel.trim()) {
-      toast({ type: "error", title: "Label is required" });
+      toast({ type: "error", title: t("categories.labelRequired") });
       return;
     }
     setSaving(true);
@@ -110,11 +110,11 @@ export default function CategoriesPage() {
         tier: Number(editTier),
         parentSlug: editParentSlug.trim() || undefined,
       });
-      toast({ type: "success", title: "Category updated" });
+      toast({ type: "success", title: t("categories.updated") });
       setEditing(null);
       refresh();
     } catch (e: any) {
-      toast({ type: "error", title: "Failed to update", description: e?.message });
+      toast({ type: "error", title: t("categories.updateFailed"), description: e?.message });
     } finally {
       setSaving(false);
     }
@@ -126,7 +126,7 @@ export default function CategoriesPage() {
   );
 
   async function bulkSetActive(selectedRows: AdminCategoryResult[], value: boolean) {
-    const label = value ? "Activate" : "Deactivate";
+    const actionLabel = value ? t("common.activate") : t("common.deactivate");
     try {
       await Promise.all(
         selectedRows.map((row) =>
@@ -141,10 +141,10 @@ export default function CategoriesPage() {
           })
         )
       );
-      toast({ type: "success", title: `${label}d ${selectedRows.length} categories` });
+      toast({ type: "success", title: `${actionLabel}d ${selectedRows.length} categories` });
       refresh();
     } catch (e: any) {
-      toast({ type: "error", title: `Failed to ${label.toLowerCase()}`, description: e?.message });
+      toast({ type: "error", title: `${actionLabel} failed`, description: e?.message });
     }
   }
 
@@ -172,18 +172,18 @@ export default function CategoriesPage() {
     },
     {
       accessorKey: "slug",
-      header: "Slug",
+      header: t("categories.slug"),
       cell: ({ getValue }) => <span className="font-mono text-xs">{String(getValue() ?? "")}</span>,
     },
-    { accessorKey: "label", header: "Label" },
+    { accessorKey: "label", header: t("categories.label") },
     {
       accessorKey: "tier",
-      header: "Tier",
+      header: t("categories.tier"),
       cell: ({ getValue }) => <span className="font-mono text-xs">{getValue() != null ? String(getValue()) : "-"}</span>,
     },
     {
       accessorKey: "parentSlug",
-      header: "Parent",
+      header: t("categories.parent"),
       cell: ({ getValue }) => {
         const v = getValue();
         return v ? <span className="font-mono text-xs">{String(v)}</span> : <span className="text-[rgb(var(--fg-secondary))] text-xs">-</span>;
@@ -191,7 +191,7 @@ export default function CategoriesPage() {
     },
     {
       accessorKey: "iabCode",
-      header: "IAB Code",
+      header: t("categories.iabCode"),
       cell: ({ getValue }) => {
         const v = getValue();
         return v ? <span className="font-mono text-xs">{String(v)}</span> : <span className="text-[rgb(var(--fg-secondary))] text-xs">-</span>;
@@ -199,17 +199,17 @@ export default function CategoriesPage() {
     },
     {
       accessorKey: "sortOrder",
-      header: "Sort",
+      header: t("categories.sortOrder"),
       cell: ({ getValue }) => <span className="font-mono text-xs">{String(getValue() ?? 0)}</span>,
     },
     {
       accessorKey: "active",
-      header: "Active",
+      header: t("status.active"),
       cell: ({ getValue }) =>
         getValue() ? (
-          <Badge tone="success">Active</Badge>
+          <Badge tone="success">{t("status.active")}</Badge>
         ) : (
-          <Badge tone="neutral">Inactive</Badge>
+          <Badge tone="neutral">{t("status.inactive")}</Badge>
         ),
     },
     {
@@ -218,16 +218,16 @@ export default function CategoriesPage() {
       enableSorting: false,
       enableHiding: false,
     },
-  ], []);
+  ], [t]);
 
   async function onDelete(row: AdminCategoryResult) {
     if (!confirm(`Delete category "${row.label}" (${row.slug})?`)) return;
     try {
       await apiDelete(`/api/admin/categories/${encodeURIComponent(row.slug)}`);
-      toast({ type: "success", title: "Category deleted" });
+      toast({ type: "success", title: t("categories.deleted") });
       refresh();
     } catch (e: any) {
-      toast({ type: "error", title: "Failed to delete", description: e?.message });
+      toast({ type: "error", title: t("categories.deleteFailed"), description: e?.message });
     }
   }
 
@@ -239,42 +239,42 @@ export default function CategoriesPage() {
           apiDelete(`/api/admin/categories/${encodeURIComponent(row.slug)}`)
         )
       );
-      toast({ type: "success", title: `Deleted ${selectedRows.length} categories` });
+      toast({ type: "success", title: `${t("categories.deleted")} (${selectedRows.length})` });
       refresh();
     } catch (e: any) {
-      toast({ type: "error", title: "Failed to delete", description: e?.message });
+      toast({ type: "error", title: t("categories.deleteFailed"), description: e?.message });
     }
   }
 
   const rowActions = React.useMemo(() => [
     {
-      label: "Edit",
+      label: t("common.edit"),
       onClick: (row: AdminCategoryResult) => openEdit(row),
     },
     {
-      label: "Delete",
+      label: t("common.delete"),
       onClick: (row: AdminCategoryResult) => onDelete(row),
       tone: "danger" as const,
     },
-  ], []);
+  ], [t]);
 
   return (
     <div className="space-y-6">
       <div>
-        <div className="text-lg font-extrabold tracking-tight">Categories</div>
-        <div className="mt-1 text-sm text-[rgb(var(--fg-secondary))]">Manage content categories used for catalog browsing.</div>
+        <div className="text-lg font-extrabold tracking-tight">{t("categories.title")}</div>
+        <div className="mt-1 text-sm text-[rgb(var(--fg-secondary))]">{t("categories.desc")}</div>
       </div>
 
       {/* Create form */}
       <Card>
         <CardHeader>
-          <div className="text-sm font-semibold">Create Category</div>
+          <div className="text-sm font-semibold">{t("categories.createCategory")}</div>
         </CardHeader>
         <CardContent>
           <form onSubmit={onCreate} className="space-y-3">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div className="space-y-1">
-                <label className="text-xs font-semibold text-[rgb(var(--fg-secondary))]">Slug *</label>
+                <label className="text-xs font-semibold text-[rgb(var(--fg-secondary))]">{t("categories.slug")} *</label>
                 <Input
                   placeholder="e.g. tv-comedy"
                   value={slug}
@@ -283,7 +283,7 @@ export default function CategoriesPage() {
                 />
               </div>
               <div className="space-y-1">
-                <label className="text-xs font-semibold text-[rgb(var(--fg-secondary))]">Label *</label>
+                <label className="text-xs font-semibold text-[rgb(var(--fg-secondary))]">{t("categories.label")} *</label>
                 <Input
                   placeholder="e.g. TV Comedy"
                   value={label}
@@ -294,7 +294,7 @@ export default function CategoriesPage() {
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs font-semibold text-[rgb(var(--fg-secondary))]">Description</label>
+              <label className="text-xs font-semibold text-[rgb(var(--fg-secondary))]">{t("field.description")}</label>
               <Input
                 placeholder="Optional description"
                 value={description}
@@ -304,7 +304,7 @@ export default function CategoriesPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <div className="space-y-1">
-                <label className="text-xs font-semibold text-[rgb(var(--fg-secondary))]">IAB Code</label>
+                <label className="text-xs font-semibold text-[rgb(var(--fg-secondary))]">{t("categories.iabCode")}</label>
                 <Input
                   placeholder="e.g. IAB1-1"
                   value={iabCode}
@@ -312,25 +312,25 @@ export default function CategoriesPage() {
                 />
               </div>
               <div className="space-y-1">
-                <label className="text-xs font-semibold text-[rgb(var(--fg-secondary))]">Tier</label>
+                <label className="text-xs font-semibold text-[rgb(var(--fg-secondary))]">{t("categories.tier")}</label>
                 <select
                   className="h-10 w-full rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] px-3 text-sm"
                   value={tier}
                   onChange={(e) => setTier(e.target.value)}
                 >
-                  <option value="1">Tier 1 (Top-level)</option>
-                  <option value="2">Tier 2 (Sub-category)</option>
-                  <option value="3">Tier 3</option>
+                  <option value="1">{t("categories.tier1")}</option>
+                  <option value="2">{t("categories.tier2")}</option>
+                  <option value="3">{t("categories.tier3")}</option>
                 </select>
               </div>
               <div className="space-y-1">
-                <label className="text-xs font-semibold text-[rgb(var(--fg-secondary))]">Parent Category</label>
+                <label className="text-xs font-semibold text-[rgb(var(--fg-secondary))]">{t("categories.parentCategory")}</label>
                 <select
                   className="h-10 w-full rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] px-3 text-sm"
                   value={parentSlug}
                   onChange={(e) => setParentSlug(e.target.value)}
                 >
-                  <option value="">None (top-level)</option>
+                  <option value="">{t("categories.noneTopLevel")}</option>
                   {parentOptions.map((c) => (
                     <option key={c.slug} value={c.slug}>{c.label} ({c.slug})</option>
                   ))}
@@ -340,7 +340,7 @@ export default function CategoriesPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div className="space-y-1">
-                <label className="text-xs font-semibold text-[rgb(var(--fg-secondary))]">Sort Order</label>
+                <label className="text-xs font-semibold text-[rgb(var(--fg-secondary))]">{t("categories.sortOrder")}</label>
                 <Input
                   type="number"
                   value={sortOrder}
@@ -355,13 +355,13 @@ export default function CategoriesPage() {
                     onChange={(e) => setActive(e.target.checked)}
                     className="h-4 w-4 rounded"
                   />
-                  Active
+                  {t("status.active")}
                 </label>
               </div>
             </div>
 
             <Button type="submit" tone="primary" disabled={creating || !slug.trim() || !label.trim()}>
-              {creating ? "Creating…" : "Create Category"}
+              {creating ? t("common.creating") : t("categories.createCategory")}
             </Button>
           </form>
         </CardContent>
@@ -376,7 +376,7 @@ export default function CategoriesPage() {
           >
             <div className="flex items-center justify-between border-b border-[rgb(var(--border))] px-6 py-4">
               <div>
-                <div className="text-sm font-semibold">Edit Category</div>
+                <div className="text-sm font-semibold">{t("categories.editCategory")}</div>
                 <div className="mt-0.5 text-xs text-[rgb(var(--fg-secondary))] font-mono">{editing.slug}</div>
               </div>
               <button
@@ -388,7 +388,7 @@ export default function CategoriesPage() {
             </div>
             <form onSubmit={onSaveEdit} className="p-6 space-y-3">
               <div className="space-y-1">
-                <label className="text-xs font-semibold text-[rgb(var(--fg-secondary))]">Label *</label>
+                <label className="text-xs font-semibold text-[rgb(var(--fg-secondary))]">{t("categories.label")} *</label>
                 <Input
                   value={editLabel}
                   onChange={(e) => setEditLabel(e.target.value)}
@@ -397,7 +397,7 @@ export default function CategoriesPage() {
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-semibold text-[rgb(var(--fg-secondary))]">Description</label>
+                <label className="text-xs font-semibold text-[rgb(var(--fg-secondary))]">{t("field.description")}</label>
                 <Input
                   value={editDescription}
                   onChange={(e) => setEditDescription(e.target.value)}
@@ -406,35 +406,35 @@ export default function CategoriesPage() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold text-[rgb(var(--fg-secondary))]">IAB Code</label>
+                  <label className="text-xs font-semibold text-[rgb(var(--fg-secondary))]">{t("categories.iabCode")}</label>
                   <Input
                     value={editIabCode}
                     onChange={(e) => setEditIabCode(e.target.value)}
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold text-[rgb(var(--fg-secondary))]">Tier</label>
+                  <label className="text-xs font-semibold text-[rgb(var(--fg-secondary))]">{t("categories.tier")}</label>
                   <select
                     className="h-10 w-full rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] px-3 text-sm"
                     value={editTier}
                     onChange={(e) => setEditTier(e.target.value)}
                   >
-                    <option value="1">Tier 1 (Top-level)</option>
-                    <option value="2">Tier 2 (Sub-category)</option>
-                    <option value="3">Tier 3</option>
+                    <option value="1">{t("categories.tier1")}</option>
+                    <option value="2">{t("categories.tier2")}</option>
+                    <option value="3">{t("categories.tier3")}</option>
                   </select>
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold text-[rgb(var(--fg-secondary))]">Parent Category</label>
+                  <label className="text-xs font-semibold text-[rgb(var(--fg-secondary))]">{t("categories.parentCategory")}</label>
                   <select
                     className="h-10 w-full rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] px-3 text-sm"
                     value={editParentSlug}
                     onChange={(e) => setEditParentSlug(e.target.value)}
                   >
-                    <option value="">None (top-level)</option>
+                    <option value="">{t("categories.noneTopLevel")}</option>
                     {parentOptions
                       .filter((c) => c.slug !== editing.slug)
                       .map((c) => (
@@ -443,7 +443,7 @@ export default function CategoriesPage() {
                   </select>
                 </div>
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold text-[rgb(var(--fg-secondary))]">Sort Order</label>
+                  <label className="text-xs font-semibold text-[rgb(var(--fg-secondary))]">{t("categories.sortOrder")}</label>
                   <Input
                     type="number"
                     value={editSortOrder}
@@ -460,16 +460,16 @@ export default function CategoriesPage() {
                     onChange={(e) => setEditActive(e.target.checked)}
                     className="h-4 w-4 rounded"
                   />
-                  Active
+                  {t("status.active")}
                 </label>
               </div>
 
               <div className="flex gap-2 pt-2">
                 <Button type="submit" tone="primary" disabled={saving || !editLabel.trim()}>
-                  {saving ? "Saving…" : "Save Changes"}
+                  {saving ? t("common.saving") : t("categories.saveChanges")}
                 </Button>
                 <Button type="button" tone="secondary" onClick={() => setEditing(null)}>
-                  Cancel
+                  {t("common.cancel")}
                 </Button>
               </div>
             </form>
@@ -479,26 +479,26 @@ export default function CategoriesPage() {
 
       {/* List */}
       <DataTable<AdminCategoryResult>
-        title="All Categories"
-        description="Categories are used to classify content for catalog browsing."
+        title={t("categories.allCategories")}
+        description={t("categories.tableDesc")}
         data={rows}
         columns={columns}
-        searchPlaceholder="Search by slug or label…"
+        searchPlaceholder={t("categories.searchPlaceholder")}
         globalSearchText={(r) => `${r.slug} ${r.label} ${r.description ?? ""}`}
         initialDensity="compact"
         initialPageSize={20}
         rowActions={rowActions}
         bulkActions={[
           {
-            label: "Activate",
+            label: t("common.activate"),
             onClick: (selected) => bulkSetActive(selected, true),
           },
           {
-            label: "Deactivate",
+            label: t("common.deactivate"),
             onClick: (selected) => bulkSetActive(selected, false),
           },
           {
-            label: "Delete",
+            label: t("common.delete"),
             onClick: (selected) => bulkDelete(selected),
             tone: "danger",
           },

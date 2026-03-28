@@ -11,7 +11,7 @@ import { ExpandableText } from "@/components/table/ExpandableText";
 import { Badge, Button, Input } from "@/components/ui";
 import { apiGet, apiPost } from "@/lib/http";
 import { useToast } from "@/components/toast";
-import { useLanguage } from "@/components/language/LanguageProvider";
+import { useTranslation } from "@/lib/i18n";
 
 /** ✅ 너희 응답에 맞춰 필드명만 조정 */
 type FailureRow = {
@@ -50,7 +50,7 @@ function classify(r: FailureRow) {
 
 export default function AdminFailuresPage() {
   const { toast } = useToast();
-  const { lang } = useLanguage();
+  const { t, lang } = useTranslation();
 
   const [loading, setLoading] = React.useState(true);
   const [rows, setRows] = React.useState<FailureRow[]>([]);
@@ -116,14 +116,14 @@ export default function AdminFailuresPage() {
       }
       toast({
         type: "success",
-        title: "Retry requested",
+        title: t("failures.retryStarted"),
         description: r.assetId ? `assetId=${r.assetId}` : `contentId=${r.contentId}`,
       });
 
       // ✅ 제품급: 액션 후 즉시 1회 당겨서 새 상태 반영
       refresh({ silent: true });
     } catch (e: any) {
-      toast({ type: "error", title: "Retry failed", description: e?.message ?? "Unknown error" });
+      toast({ type: "error", title: t("failures.retryFailed"), description: e?.message ?? "Unknown error" });
     }
   }
 
@@ -131,10 +131,10 @@ export default function AdminFailuresPage() {
     try {
       /** ✅ 너희 transcode endpoint로 맞추기 */
       await apiPost(`/api/admin/contents/${r.contentId}/transcode`, {});
-      toast({ type: "success", title: "Transcode started", description: r.contentId });
+      toast({ type: "success", title: t("contents.transcodeStarted"), description: r.contentId });
       refresh({ silent: true });
     } catch (e: any) {
-      toast({ type: "error", title: "Transcode failed", description: e?.message ?? "Unknown" });
+      toast({ type: "error", title: t("contents.transcodeFailed"), description: e?.message ?? "Unknown" });
     }
   }
 
@@ -176,7 +176,7 @@ export default function AdminFailuresPage() {
       selectColumn<FailureRow>(),
       {
         accessorKey: "contentId",
-        header: "Content",
+        header: t("failures.contentId"),
         cell: ({ row, getValue }) => (
           <div className="flex flex-col">
             <Link
@@ -193,14 +193,14 @@ export default function AdminFailuresPage() {
       },
       {
         accessorKey: "title",
-        header: "Title",
+        header: t("field.title"),
         cell: ({ getValue }) => (
           <div className="max-w-[420px] truncate text-[rgb(var(--fg))]">{String(getValue() ?? "-")}</div>
         ),
       },
       {
         id: "status",
-        header: "Status",
+        header: t("field.status"),
         cell: ({ row }) => {
           const s = bestStatus(row.original);
           return <Badge tone={statusTone(s) as any}>{s}</Badge>;
@@ -208,36 +208,36 @@ export default function AdminFailuresPage() {
       },
       {
         accessorKey: "attemptCount",
-        header: "Attempts",
+        header: t("contents.attempts"),
         cell: ({ getValue }) => <span className="font-mono text-xs">{String(getValue() ?? 0)}</span>,
       },
       {
         accessorKey: "errorMessage",
-        header: "Error",
+        header: t("failures.error"),
         cell: ({ getValue }) => <ExpandableText text={String(getValue() ?? "")} />,
       },
       {
         accessorKey: "updatedAt",
-        header: "Updated",
+        header: t("contents.updated"),
         cell: ({ getValue }) => <span className="text-[rgb(var(--fg-secondary))]">{String(getValue() ?? "-")}</span>,
       },
       actionsColumn<FailureRow>(),
     ];
-  }, []);
+  }, [t]);
 
-  if (loading) return <div className="text-sm text-[rgb(var(--fg-secondary))]">Loading…</div>;
+  if (loading) return <div className="text-sm text-[rgb(var(--fg-secondary))]">{t("common.loading")}</div>;
 
   if (err) {
     return (
       <div className="rounded-2xl border border-red-500/30 bg-red-500/10 p-6">
-        <div className="font-semibold text-red-400">Failed to load</div>
+        <div className="font-semibold text-red-400">{t("detail.failedToLoad")}</div>
         <div className="mt-1 text-sm text-red-400">{err}</div>
         <div className="mt-4 flex items-center gap-2">
           <Button tone="secondary" onClick={() => refresh()}>
-            Retry
+            {t("common.retry")}
           </Button>
           <Button tone="secondary" onClick={() => setPolling((v) => !v)}>
-            Polling: {polling ? "ON" : "OFF"}
+            {t("detail.polling")}: {polling ? t("detail.on") : t("detail.off")}
           </Button>
         </div>
       </div>
@@ -250,9 +250,9 @@ export default function AdminFailuresPage() {
       <div className="rounded-2xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] p-4 shadow-sm">
         <div className="flex flex-col lg:flex-row lg:items-center gap-3">
           <div className="flex-1">
-            <div className="text-lg font-bold tracking-tight">Failures</div>
+            <div className="text-lg font-bold tracking-tight">{t("failures.title")}</div>
             <div className="mt-1 text-sm text-[rgb(var(--fg-secondary))]">
-              Monitor failed assets, trigger retries, and watch status converge.
+              {t("failures.desc")}
             </div>
             <div className="mt-2 text-xs text-[rgb(var(--fg-secondary))]">
               {lastUpdatedAt
@@ -265,15 +265,15 @@ export default function AdminFailuresPage() {
             <Input
               value={quickQ}
               onChange={(e) => setQuickQ(e.target.value)}
-              placeholder="Quick filter (contentId/assetId/title/error)…"
+              placeholder={t("failures.searchPlaceholder")}
             />
 
             <Button tone="secondary" className="h-10" onClick={() => refresh()}>
-              Refresh
+              {t("common.refresh")}
             </Button>
 
             <Button tone="secondary" className="h-10" onClick={() => setPolling((v) => !v)}>
-              Polling: {polling ? "ON" : "OFF"}
+              {t("detail.polling")}: {polling ? t("detail.on") : t("detail.off")}
             </Button>
 
             <select
@@ -293,31 +293,31 @@ export default function AdminFailuresPage() {
 
         <div className="mt-4 grid grid-cols-2 lg:grid-cols-4 gap-3">
           <StatCard
-            label="Failed"
+            label={t("failures.failed")}
             value={stats.failed}
             tone="danger"
             active={scope === "FAILED"}
-            hint="Needs action"
+            hint={t("failures.failedHint")}
             onClick={() => setScope((s) => (s === "FAILED" ? "ALL" : "FAILED"))}
           />
           <StatCard
-            label="Processing"
+            label={t("failures.processing")}
             value={stats.processing}
             tone="warning"
             active={scope === "PROCESSING"}
-            hint="In progress"
+            hint={t("failures.processingHint")}
             onClick={() => setScope((s) => (s === "PROCESSING" ? "ALL" : "PROCESSING"))}
           />
           <StatCard
-            label="Healthy"
+            label={t("failures.healthy")}
             value={stats.healthy}
             tone="success"
             active={scope === "HEALTHY"}
-            hint="No action needed"
+            hint={t("failures.healthyHint")}
             onClick={() => setScope((s) => (s === "HEALTHY" ? "ALL" : "HEALTHY"))}
           />
           <StatCard
-            label="Total"
+            label={t("failures.total")}
             value={stats.total}
             tone="neutral"
             active={scope === "ALL"}
@@ -329,20 +329,20 @@ export default function AdminFailuresPage() {
 
       {/* ✅ DataTable */}
       <DataTable<FailureRow>
-        title="Failed video assets"
-        description="Row actions provide quick operations. Use bulk retry for batch recovery."
+        title={t("failures.failedAssets")}
+        description={t("failures.tableDesc")}
         data={scopedRows}
         columns={columns}
-        searchPlaceholder="Search inside table… (refines scoped results)"
+        searchPlaceholder={t("failures.searchPlaceholder")}
         globalSearchText={(r) =>
           `${r.contentId ?? ""} ${r.assetId ?? ""} ${r.title ?? ""} ${bestStatus(r)} ${r.errorMessage ?? ""}`
         }
         rowActions={[
-          { label: "Open panel", onClick: (r) => openPanel(r) },
-          { label: "Retry", tone: "danger", onClick: retryOne },
-          { label: "Transcode", onClick: transcodeOne },
+          { label: t("contents.openDetail"), onClick: (r) => openPanel(r) },
+          { label: t("common.retry"), tone: "danger", onClick: retryOne },
+          { label: t("contents.transcode"), onClick: transcodeOne },
           {
-            label: "Open detail",
+            label: t("contents.openDetail"),
             onClick: (r) => {
               window.location.href = `/admin/contents/${r.contentId}`;
             },
@@ -356,7 +356,7 @@ export default function AdminFailuresPage() {
         ]}
         bulkActions={[
           {
-            label: "Bulk Retry",
+            label: t("failures.bulkRetry"),
             tone: "danger",
             onClick: async (selected) => {
               // 서버 bulk API가 없으면 순차 호출.
@@ -376,8 +376,8 @@ export default function AdminFailuresPage() {
         actions={
           selected ? (
             <>
-              <Button tone="danger" className="h-9" onClick={() => retryOne(selected)}>Retry</Button>
-              <Button tone="secondary" className="h-9" onClick={() => transcodeOne(selected)}>Transcode</Button>
+              <Button tone="danger" className="h-9" onClick={() => retryOne(selected)}>{t("common.retry")}</Button>
+              <Button tone="secondary" className="h-9" onClick={() => transcodeOne(selected)}>{t("contents.transcode")}</Button>
             </>
           ) : null
         }
@@ -385,7 +385,7 @@ export default function AdminFailuresPage() {
         {selected ? (
           <div className="space-y-3">
             <div className="rounded-2xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] p-4 shadow-sm">
-              <div className="text-xs font-semibold text-[rgb(var(--fg-secondary))]">Status</div>
+              <div className="text-xs font-semibold text-[rgb(var(--fg-secondary))]">{t("field.status")}</div>
               <div className="mt-2 flex flex-wrap items-center gap-2">
                 <Badge tone={statusTone(bestStatus(selected)) as any}>{bestStatus(selected)}</Badge>
                 {selected.latestJobStatus ? (
@@ -395,20 +395,20 @@ export default function AdminFailuresPage() {
             </div>
 
             <div className="rounded-2xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] p-4 shadow-sm">
-              <div className="text-xs font-semibold text-[rgb(var(--fg-secondary))]">Error</div>
+              <div className="text-xs font-semibold text-[rgb(var(--fg-secondary))]">{t("failures.error")}</div>
               <div className="mt-2">
                 <ExpandableText text={selected.errorMessage ?? ""} clamp={4} />
               </div>
             </div>
 
             <div className="rounded-2xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] p-4 shadow-sm">
-              <div className="text-xs font-semibold text-[rgb(var(--fg-secondary))]">Ops</div>
+              <div className="text-xs font-semibold text-[rgb(var(--fg-secondary))]">{t("common.actions")}</div>
               <div className="mt-2 flex flex-wrap gap-2">
                 <Button tone="secondary" onClick={() => window.open(`/watch/${selected.contentId}`, "_blank")}>
                   Open watch
                 </Button>
                 <Button tone="secondary" onClick={() => (window.location.href = `/admin/contents/${selected.contentId}`)}>
-                  Open content detail
+                  {t("contents.openDetail")}
                 </Button>
                 <Button
                   tone="secondary"

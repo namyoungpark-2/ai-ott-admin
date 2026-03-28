@@ -4,7 +4,7 @@ import * as React from "react";
 import { apiDelete, apiGet, apiPut } from "@/lib/http";
 import { Badge, Button } from "@/components/ui";
 import { useToast } from "@/components/toast";
-import { useLanguage } from "@/components/language/LanguageProvider";
+import { useTranslation } from "@/lib/i18n";
 
 type UserRow = {
   id: string;
@@ -37,7 +37,7 @@ function formatDate(iso?: string | null) {
 
 export default function AdminUsersPage() {
   const { toast } = useToast();
-  const { lang } = useLanguage();
+  const { t, lang } = useTranslation();
   const [rows, setRows] = React.useState<UserRow[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [err, setErr] = React.useState<string | null>(null);
@@ -57,7 +57,7 @@ export default function AdminUsersPage() {
       const data = await apiGet<UserRow[]>(url);
       setRows(data ?? []);
     } catch (e: unknown) {
-      setErr(e instanceof Error ? e.message : "Failed to load");
+      setErr(e instanceof Error ? e.message : t("users.loadFailed"));
     } finally {
       setLoading(false);
     }
@@ -74,11 +74,11 @@ export default function AdminUsersPage() {
     setSaving(userId);
     try {
       await apiPut(`/api/admin/users/${userId}/subscription`, { tier: newTier });
-      toast({ title: "구독 플랜 변경 완료", type: "success" });
+      toast({ title: t("users.tierChanged"), type: "success" });
       await refresh();
     } catch (e: unknown) {
       toast({
-        title: "변경 실패",
+        title: t("users.tierFailed"),
         description: e instanceof Error ? e.message : "Unknown error",
         type: "error",
       });
@@ -90,18 +90,18 @@ export default function AdminUsersPage() {
   async function handleDelete(userId: string, username: string) {
     if (
       !window.confirm(
-        `정말로 "${username}" 계정을 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.`
+        `${t("users.deleteConfirm")}\n(${username})`
       )
     )
       return;
     setDeleting(userId);
     try {
       await apiDelete(`/api/admin/users/${userId}`);
-      toast({ title: "계정 삭제 완료", type: "success" });
+      toast({ title: t("users.deleted"), type: "success" });
       setRows((prev) => prev.filter((r) => r.id !== userId));
     } catch (e: unknown) {
       toast({
-        title: "삭제 실패",
+        title: t("users.deleteFailed"),
         description: e instanceof Error ? e.message : "Unknown error",
         type: "error",
       });
@@ -115,30 +115,30 @@ export default function AdminUsersPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-grad">사용자 관리</h1>
+          <h1 className="text-2xl font-bold text-grad">{t("users.title")}</h1>
           <p className="text-sm text-[rgb(var(--fg))]/40 mt-1">
-            총 {rows.length}명의 사용자
+            {t("users.totalCount").replace("{count}", String(rows.length))}
           </p>
         </div>
         <Button tone="secondary" onClick={refresh} disabled={loading}>
-          {loading ? "로딩 중…" : "새로고침"}
+          {loading ? t("common.loading") : t("common.refresh")}
         </Button>
       </div>
 
       {/* Tier filter */}
       <div className="flex gap-2">
-        {(["ALL", ...TIERS] as const).map((t) => (
+        {(["ALL", ...TIERS] as const).map((tier) => (
           <button
-            key={t}
-            onClick={() => setTierFilter(t)}
+            key={tier}
+            onClick={() => setTierFilter(tier)}
             className={[
               "px-3 py-1.5 rounded-full text-xs font-semibold transition border",
-              tierFilter === t
+              tierFilter === tier
                 ? "bg-violet-500/20 text-violet-300 border-violet-500/40"
                 : "border-[rgb(var(--border))] text-[rgb(var(--fg))]/50 hover:border-violet-500/30 hover:text-[rgb(var(--fg))]/80",
             ].join(" ")}
           >
-            {t === "ALL" ? "전체" : t}
+            {tier === "ALL" ? t("users.allTiers") : tier}
           </button>
         ))}
       </div>
@@ -156,15 +156,15 @@ export default function AdminUsersPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-[rgb(var(--border))] text-left text-xs text-[rgb(var(--fg))]/35 uppercase tracking-wide">
-                <th className="px-4 py-3">사용자명</th>
-                <th className="px-4 py-3">역할</th>
-                <th className="px-4 py-3">구독 플랜</th>
-                <th className="px-4 py-3">이메일 인증</th>
-                <th className="px-4 py-3">가입일</th>
-                <th className="px-4 py-3">구독 만료</th>
-                <th className="px-4 py-3">Stripe</th>
-                <th className="px-4 py-3">플랜 변경</th>
-                <th className="px-4 py-3">삭제</th>
+                <th className="px-4 py-3">{t("users.username")}</th>
+                <th className="px-4 py-3">{t("users.role")}</th>
+                <th className="px-4 py-3">{t("users.subscriptionTier")}</th>
+                <th className="px-4 py-3">{t("users.emailVerified")}</th>
+                <th className="px-4 py-3">{t("field.createdAt")}</th>
+                <th className="px-4 py-3">{t("users.subscriptionExpiry")}</th>
+                <th className="px-4 py-3">{t("users.stripe")}</th>
+                <th className="px-4 py-3">{t("users.changeTierCol")}</th>
+                <th className="px-4 py-3">{t("common.delete")}</th>
               </tr>
             </thead>
             <tbody>
@@ -174,7 +174,7 @@ export default function AdminUsersPage() {
                     colSpan={9}
                     className="px-4 py-12 text-center text-[rgb(var(--fg))]/30 text-sm"
                   >
-                    사용자가 없습니다.
+                    {t("users.noUsers")}
                   </td>
                 </tr>
               ) : (
@@ -226,9 +226,9 @@ export default function AdminUsersPage() {
                           }
                           className="rounded-lg border border-[rgb(var(--border))] bg-[rgb(var(--muted))] text-[rgb(var(--fg))]/80 px-2 py-1 text-xs outline-none focus:border-violet-500/50 transition"
                         >
-                          {TIERS.map((t) => (
-                            <option key={t} value={t}>
-                              {t}
+                          {TIERS.map((tier) => (
+                            <option key={tier} value={tier}>
+                              {tier}
                             </option>
                           ))}
                         </select>
@@ -242,7 +242,7 @@ export default function AdminUsersPage() {
                           }
                           onClick={() => handleChangeTier(row.id)}
                         >
-                          {saving === row.id ? "…" : "저장"}
+                          {saving === row.id ? "…" : t("users.changeTier")}
                         </Button>
                       </div>
                     </td>
@@ -253,7 +253,7 @@ export default function AdminUsersPage() {
                         disabled={deleting === row.id}
                         onClick={() => handleDelete(row.id, row.username)}
                       >
-                        {deleting === row.id ? "…" : "삭제"}
+                        {deleting === row.id ? "…" : t("common.delete")}
                       </Button>
                     </td>
                   </tr>
@@ -266,7 +266,7 @@ export default function AdminUsersPage() {
 
       {loading && (
         <div className="text-sm text-[rgb(var(--fg))]/30 py-12 text-center">
-          로딩 중…
+          {t("common.loading")}
         </div>
       )}
     </div>

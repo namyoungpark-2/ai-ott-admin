@@ -7,6 +7,7 @@ import { CommandButton } from "@/components/command/CommandButton";
 import { UserMenu } from "@/components/shell/UserMenu";
 import { useTheme } from "@/components/theme/ThemeProvider";
 import { useLanguage, LANG_OPTIONS } from "@/components/language/LanguageProvider";
+import { useTranslation } from "@/lib/i18n";
 
 /* ─── Nav Icons ─────────────────────────────────────────────────────── */
 function IconDashboard() {
@@ -158,23 +159,23 @@ function LanguageSelector() {
   );
 }
 
-/* ─── Nav config ────────────────────────────────────────────────────── */
-const NAV = [
-  { href: "/admin",            label: "Dashboard",  icon: <IconDashboard />,  exact: true },
-  { href: "/admin/contents",   label: "Contents",   icon: <IconContents /> },
-  { href: "/admin/upload",     label: "Upload",     icon: <IconUpload /> },
-  { href: "/admin/categories", label: "Categories", icon: <IconCategories /> },
-  { href: "/admin/genres",     label: "Genres",     icon: <IconGenres /> },
-  { href: "/admin/channels",   label: "Channels",   icon: <IconChannels /> },
-  { href: "/admin/users",      label: "Users",      icon: <IconUsers /> },
-  { href: "/admin/failures",   label: "Failures",   icon: <IconFailures /> },
-  { href: "/admin/ops",        label: "Ops",        icon: <IconOps /> },
-];
-
 /* ─── AppShell ──────────────────────────────────────────────────────── */
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
+  const { t } = useTranslation();
+
+  const NAV = useMemo(() => [
+    { href: "/admin",            label: t("nav.dashboard"),   icon: <IconDashboard />,  exact: true },
+    { href: "/admin/contents",   label: t("nav.contents"),    icon: <IconContents /> },
+    { href: "/admin/upload",     label: t("nav.upload"),      icon: <IconUpload /> },
+    { href: "/admin/categories", label: t("nav.categories"),  icon: <IconCategories /> },
+    { href: "/admin/genres",     label: t("nav.genres"),      icon: <IconGenres /> },
+    { href: "/admin/channels",   label: t("nav.channels"),    icon: <IconChannels /> },
+    { href: "/admin/users",      label: t("nav.users"),       icon: <IconUsers /> },
+    { href: "/admin/failures",   label: t("nav.failures"),    icon: <IconFailures /> },
+    { href: "/admin/ops",        label: t("nav.ops"),         icon: <IconOps /> },
+  ], [t]);
 
   const crumbs = useMemo(() => {
     const parts = (pathname ?? "").split("/").filter(Boolean);
@@ -262,7 +263,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           {/* Footer */}
           {!collapsed && (
             <div className="p-4 text-xs text-[rgb(var(--fg))]/30 flex-shrink-0">
-              Operations Console
+              {t("nav.footer")}
             </div>
           )}
         </aside>

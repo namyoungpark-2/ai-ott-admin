@@ -7,7 +7,7 @@ import { DataTable } from "@/components/table/DataTable";
 import { ExpandableText } from "@/components/table/ExpandableText";
 import { StatCard } from "@/components/metrics/StatCard";
 import { apiGet } from "@/lib/http";
-import { useLanguage } from "@/components/language/LanguageProvider";
+import { useTranslation } from "@/lib/i18n";
 import type { OpsSummary, OpsFailureTop, OpsRecentRow } from "@/lib/types";
 
 function statusTone(s?: string) {
@@ -19,7 +19,7 @@ function statusTone(s?: string) {
 }
 
 export default function OpsPage() {
-  const { lang } = useLanguage();
+  const { t, lang } = useTranslation();
   const [summary, setSummary] = React.useState<OpsSummary | null>(null);
   const [topFailures, setTopFailures] = React.useState<OpsFailureTop[]>([]);
   const [recent, setRecent] = React.useState<OpsRecentRow[]>([]);
@@ -58,32 +58,32 @@ export default function OpsPage() {
   const failureCols = React.useMemo<ColumnDef<OpsFailureTop>[]>(() => [
     {
       accessorKey: "errorMessage",
-      header: "Error",
+      header: t("ops.errorMessage"),
       cell: ({ getValue }) => <ExpandableText text={String(getValue() ?? "")} />,
     },
     {
       accessorKey: "count",
-      header: "Count",
+      header: t("ops.count"),
       cell: ({ getValue }) => (
         <span className="font-mono text-xs font-bold text-red-400">{String(getValue() ?? 0)}</span>
       ),
     },
-  ], []);
+  ], [t]);
 
   const recentCols = React.useMemo<ColumnDef<OpsRecentRow>[]>(() => [
     {
       accessorKey: "jobId",
-      header: "Job ID",
+      header: t("ops.jobId"),
       cell: ({ getValue }) => <span className="font-mono text-xs">{String(getValue() ?? "")}</span>,
     },
     {
       accessorKey: "videoAssetId",
-      header: "Asset ID",
+      header: t("ops.assetId"),
       cell: ({ getValue }) => <span className="font-mono text-xs">{String(getValue() ?? "")}</span>,
     },
     {
       accessorKey: "status",
-      header: "Status",
+      header: t("field.status"),
       cell: ({ getValue }) => {
         const s = String(getValue() ?? "-");
         return <Badge tone={statusTone(s) as any}>{s}</Badge>;
@@ -91,28 +91,28 @@ export default function OpsPage() {
     },
     {
       accessorKey: "errorMessage",
-      header: "Error",
+      header: t("ops.errorMessage"),
       cell: ({ getValue }) => <ExpandableText text={String(getValue() ?? "")} />,
     },
     {
       accessorKey: "createdAt",
-      header: "Created",
+      header: t("field.createdAt"),
       cell: ({ getValue }) => <span className="text-[rgb(var(--fg-secondary))] text-xs">{String(getValue() ?? "-")}</span>,
     },
     {
       accessorKey: "updatedAt",
-      header: "Updated",
+      header: t("field.updatedAt"),
       cell: ({ getValue }) => <span className="text-[rgb(var(--fg-secondary))] text-xs">{String(getValue() ?? "-")}</span>,
     },
-  ], []);
+  ], [t]);
 
   return (
     <div className="space-y-6">
       <div className="flex items-start justify-between">
         <div>
-          <div className="text-lg font-extrabold tracking-tight">Ops — Transcoding</div>
+          <div className="text-lg font-extrabold tracking-tight">{t("ops.title")}</div>
           <div className="mt-1 text-sm text-[rgb(var(--fg-secondary))]">
-            Pipeline health and job metrics.
+            {t("ops.desc")}
             {lastUpdated && (
               <span className="ml-2 text-xs text-[rgb(var(--fg-secondary))]">
                 Last updated: {new Date(lastUpdated).toLocaleTimeString()}
@@ -121,9 +121,9 @@ export default function OpsPage() {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <Button tone="secondary" className="h-9" onClick={() => refresh()}>Refresh</Button>
+          <Button tone="secondary" className="h-9" onClick={() => refresh()}>{t("common.refresh")}</Button>
           <Button tone="secondary" className="h-9" onClick={() => setPolling((v) => !v)}>
-            Polling: {polling ? "ON" : "OFF"}
+            {t("detail.polling")}: {polling ? t("detail.on") : t("detail.off")}
           </Button>
           <select
             className="h-9 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] px-2 text-sm"
@@ -144,19 +144,19 @@ export default function OpsPage() {
         </div>
       ) : summary ? (
         <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
-          <StatCard label="Total Jobs" value={summary.totalJobs} tone="neutral" />
-          <StatCard label="Succeeded" value={summary.successCount} tone="success" />
-          <StatCard label="Failed" value={summary.failedCount} tone="danger" />
-          <StatCard label="Running" value={summary.runningCount} tone="warning" />
+          <StatCard label={t("ops.totalJobs")} value={summary.totalJobs} tone="neutral" />
+          <StatCard label={t("ops.succeeded")} value={summary.successCount} tone="success" />
+          <StatCard label={t("ops.failed")} value={summary.failedCount} tone="danger" />
+          <StatCard label={t("ops.running")} value={summary.runningCount} tone="warning" />
           <Card>
             <CardContent className="pt-5">
-              <div className="text-xs font-semibold text-[rgb(var(--fg-secondary))]">Avg Processing</div>
+              <div className="text-xs font-semibold text-[rgb(var(--fg-secondary))]">{t("ops.avgProcessing")}</div>
               <div className="mt-1 text-2xl font-extrabold">
                 {summary.avgProcessingSeconds != null
                   ? `${summary.avgProcessingSeconds.toFixed(1)}s`
                   : "-"}
               </div>
-              <div className="mt-1 text-xs text-[rgb(var(--fg-secondary))]">Per succeeded job</div>
+              <div className="mt-1 text-xs text-[rgb(var(--fg-secondary))]">{t("ops.avgProcessingHint")}</div>
             </CardContent>
           </Card>
         </div>
@@ -169,8 +169,7 @@ export default function OpsPage() {
       {/* Top failure errors */}
       <Card>
         <CardHeader>
-          <div className="text-sm font-semibold">Top Failure Errors</div>
-          <div className="text-xs text-[rgb(var(--fg-secondary))]">Most frequent error messages across all jobs.</div>
+          <div className="text-sm font-semibold">{t("ops.topFailures")}</div>
         </CardHeader>
         <CardContent>
           {topFailures.length === 0 ? (
@@ -190,8 +189,8 @@ export default function OpsPage() {
 
       {/* Recent jobs */}
       <DataTable<OpsRecentRow>
-        title="Recent Jobs"
-        description="Latest transcoding jobs across all assets."
+        title={t("ops.recentJobs")}
+        description={t("ops.recentJobsDesc")}
         data={recent}
         columns={recentCols}
         searchPlaceholder="Search by jobId/assetId/status/error…"
