@@ -19,6 +19,9 @@ export interface AdminContentSummaryDto {
   thumbnailUrl: string | null;
   streamUrl: string | null;
 
+  channelHandle: string | null;
+  channelName: string | null;
+
   createdAt: string | null;
   updatedAt: string | null;
 }
@@ -43,6 +46,9 @@ export interface AdminContentDetailDto {
 
   thumbnailUrl: string | null;
   streamUrl: string | null;
+
+  channelHandle: string | null;
+  channelName: string | null;
 
   createdAt: string | null;
   updatedAt: string | null;

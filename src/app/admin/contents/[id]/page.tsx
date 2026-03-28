@@ -10,6 +10,7 @@ import { useToast } from "@/components/toast";
 import { Badge, Button, Card, CardContent, CardHeader, Input } from "@/components/ui";
 import { apiGet, apiPost, apiPut, apiPatch } from "@/lib/http";
 import { useLanguage } from "@/components/language/LanguageProvider";
+import Link from "next/link";
 import type {
   AdminContentDetailDto,
   AdminCategoryResult,
@@ -417,6 +418,11 @@ export default function AdminContentDetailPage() {
             items={[
               { k: "Content ID", v: <span className="font-mono text-xs break-all">{detail.contentId}</span> },
               { k: "Title", v: String(detail.title ?? "-") },
+              { k: "Channel", v: detail.channelName ? (
+                <Link href="/admin/channels" className="text-violet-400 hover:underline">
+                  {detail.channelName} <span className="text-[rgb(var(--fg-secondary))]">@{detail.channelHandle}</span>
+                </Link>
+              ) : "-" },
               { k: "Content Status", v: <Badge tone={statusTone(detail.contentStatus) as any}>{String(detail.contentStatus ?? "-")}</Badge> },
               { k: "UI Status", v: <Badge tone={statusTone(uiStatus) as any}>{uiStatus}</Badge> },
               { k: "Video Asset ID", v: detail.videoAssetId ? <span className="font-mono text-xs break-all">{detail.videoAssetId}</span> : "-" },

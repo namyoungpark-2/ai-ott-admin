@@ -17,6 +17,8 @@ type ContentRow = {
   latestJobStatus?: string;
   attemptCount?: number;
   updatedAt?: string;
+  channelHandle?: string;
+  channelName?: string;
 };
 
 function statusTone(s?: string) {
@@ -70,6 +72,24 @@ export default function AdminContentsPage() {
         accessorKey: "title",
         header: "Title",
         cell: ({ getValue }) => <div className="max-w-[520px] truncate">{String(getValue() ?? "")}</div>,
+      },
+      {
+        accessorKey: "channelName",
+        header: "Channel",
+        cell: ({ row }) => {
+          const name = row.original.channelName;
+          const handle = row.original.channelHandle;
+          if (!name && !handle) return <span className="text-[rgb(var(--fg-secondary))] text-xs">-</span>;
+          return (
+            <Link
+              href="/admin/channels"
+              className="text-xs hover:underline text-violet-400"
+              title={handle ? `@${handle}` : undefined}
+            >
+              {name ?? `@${handle}`}
+            </Link>
+          );
+        },
       },
       {
         accessorKey: "uiStatus",
@@ -136,7 +156,7 @@ export default function AdminContentsPage() {
         data={rows}
         columns={columns}
         searchPlaceholder="Search by title or contentId…"
-        globalSearchText={(r) => `${r.title ?? ""} ${r.contentId ?? ""} ${r.uiStatus ?? ""} ${r.latestJobStatus ?? ""}`}
+        globalSearchText={(r) => `${r.title ?? ""} ${r.contentId ?? ""} ${r.uiStatus ?? ""} ${r.latestJobStatus ?? ""} ${r.channelName ?? ""} ${r.channelHandle ?? ""}`}
         rowActions={[
           {
             label: "Transcode",
