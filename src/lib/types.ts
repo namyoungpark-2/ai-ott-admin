@@ -85,6 +85,18 @@ export interface AdminGenreResult {
   description: string | null;
 }
 
+export type ChannelStatus = "ACTIVE" | "SUSPENDED";
+
+export interface AdminChannelResult {
+  id: string;
+  handle: string;
+  name: string;
+  profileImageUrl: string | null;
+  isOfficial: boolean;
+  subscriberCount: number;
+  status: ChannelStatus;
+}
+
 export interface AdminCreateContentCommand {
   mode: string;
   title: string;
